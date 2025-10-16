@@ -55,5 +55,12 @@ export function middleware(req: NextRequest) {
 
 // ✅ Only protect specific routes, not everything
 export const config = {
-  matcher: ["/dashboard/:path*", "/profile/:path*"], // update for your app
+  matcher: [
+    "/configurations/:path*",
+    "/detectors/:path*", 
+    "/policies/:path*",
+    "/projects/:path*",
+    "/tests/:path*",
+    "/agentic-radar/:path*"
+  ],
 };
