@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/favicon.svg", "/vercel.svg", "/next.svg", "/window.svg", "/globe.svg", "/file.svg"]; 
+const PUBLIC_PATHS = [
+  "/",
+  "/login",
+  "/signup",
+  "/favicon.svg",
+  "/vercel.svg",
+  "/next.svg",
+  "/window.svg",
+  "/globe.svg",
+  "/file.svg",
+];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -14,7 +24,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Skip authentication in development if NEXT_PUBLIC_SKIP_AUTH is set
+  // 🟢 Skip authentication completely if env var is enabled
   const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
   if (skipAuth) {
     return NextResponse.next();
@@ -22,7 +32,6 @@ export function middleware(req: NextRequest) {
 
   // Public routes
   if (PUBLIC_PATHS.includes(pathname)) {
-    // If already authenticated, redirect away from auth pages
     const token = req.cookies.get("token")?.value;
     if (token && (pathname === "/login" || pathname === "/signup")) {
       const url = req.nextUrl.clone();
@@ -32,7 +41,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Protected routes: require token
+  // Protected routes (only when skipAuth is false)
   const token = req.cookies.get("token")?.value;
   if (!token) {
     const url = req.nextUrl.clone();
@@ -44,8 +53,7 @@ export function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
+// ✅ Only protect specific routes, not everything
 export const config = {
-  matcher: [
-    "/((?!_next|api).*)",
-  ],
+  matcher: ["/dashboard/:path*", "/profile/:path*"], // update for your app
 };
