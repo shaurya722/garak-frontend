@@ -37,7 +37,7 @@ interface DetectorOutput {
   confidence_score: number;
   tags: string[];
   matched_patterns: string[] | null;
-  evidence: any;
+  evidence: Record<string, unknown>;
 }
 
 interface AuditLog {
@@ -74,7 +74,7 @@ interface EnhancedJobResults {
     REFUSE: number;
     WARN: number;
   };
-  policy_violations: any[];
+  policy_violations: Record<string, unknown>[];
   total_tests: number;
   created_at: string;
   completed_at?: string;

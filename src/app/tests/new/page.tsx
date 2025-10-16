@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -216,7 +216,7 @@ const availableProbes = [
   }
 ];
 
-export default function NewTestPage() {
+function NewTestForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedConfig = searchParams.get("config");
@@ -937,5 +937,13 @@ export default function NewTestPage() {
         </form>
       </div>
     </MainLayout>
+  );
+}
+
+export default function NewTestPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <NewTestForm />
+    </Suspense>
   );
 }

@@ -94,7 +94,7 @@ function NewPolicyPage() {
     }
   };
 
-  const handleInputChange = (field: keyof PolicyForm, value: any) => {
+  const handleInputChange = (field: keyof PolicyForm, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -301,7 +301,7 @@ function NewPolicyPage() {
                     Enable Built-in Detectors
                   </Label>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    Use system's built-in detectors for API keys, PII, jailbreaks, and other security patterns
+                    Use system&apos;s built-in detectors for API keys, PII, jailbreaks, and other security patterns
                   </p>
                 </div>
               </div>

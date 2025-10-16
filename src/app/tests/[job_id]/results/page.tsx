@@ -58,7 +58,7 @@ export default function TestResultsPage() {
   const job_id = params.job_id as string;
 
   const [results, setResults] = useState<GarakResults | null>(null);
-  const [enhancedResults, setEnhancedResults] = useState<any>(null);
+  const [enhancedResults, setEnhancedResults] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -180,7 +180,7 @@ export default function TestResultsPage() {
               </div>
 
               <div className="flex items-center space-x-3">
-                <SecurityReportPDF data={enhancedResults || results}>
+                <SecurityReportPDF data={results}>
                   <Button variant="outline">
                     <Download className="h-4 w-4 mr-2" />
                     Download Report

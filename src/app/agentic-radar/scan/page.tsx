@@ -65,7 +65,7 @@ export default function AgenticRadarScanPage() {
         ? data.supported_frameworks
         : (data?.frameworks || []);
       const names = list
-        .map((f: any) => (typeof f === "string" ? f : (f?.name ?? f?.value)))
+        .map((f: string | { name?: string; value?: string }) => (typeof f === "string" ? f : (f?.name ?? f?.value)))
         .filter(Boolean);
       setFrameworks(names as string[]);
       console.log('dfdf',data);

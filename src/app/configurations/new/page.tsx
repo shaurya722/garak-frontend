@@ -342,7 +342,7 @@ export default function NewConfigurationPage() {
                   required
                 />
                 <p className="text-xs text-gray-600 mt-1">
-                  JSON field path to extract the response text (e.g., "response", "data.message", "choices.0.text")
+                  JSON field path to extract the response text (e.g., &quot;response&quot;, &quot;data.message&quot;, &quot;choices.0.text&quot;)
                 </p>
               </div>
             </CardContent>

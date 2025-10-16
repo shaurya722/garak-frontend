@@ -92,7 +92,7 @@ export default function EditDetectorPage() {
     }
   };
 
-  const handleInputChange = (field: keyof DetectorForm, value: any) => {
+  const handleInputChange = (field: keyof DetectorForm, value: string | boolean | number) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,

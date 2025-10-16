@@ -19,7 +19,7 @@ interface RestGeneratorConfig {
   uri: string;
   method: string;
   headers: Record<string, string>;
-  req_template_json_object: Record<string, any>;
+  req_template_json_object: Record<string, unknown>;
   response_json: boolean;
   response_json_field: string;
 }
@@ -101,7 +101,7 @@ export default function EditConfigurationPage() {
 
   const handleAuthTypeChange = (type: string) => {
     setAuthType(type);
-    let headers: Record<string, string> = { "Content-Type": "application/json" };
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
     
     switch (type) {
       case "bearer":
