@@ -14,6 +14,12 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Skip authentication in development if NEXT_PUBLIC_SKIP_AUTH is set
+  const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
+  if (skipAuth) {
+    return NextResponse.next();
+  }
+
   // Public routes
   if (PUBLIC_PATHS.includes(pathname)) {
     // If already authenticated, redirect away from auth pages
