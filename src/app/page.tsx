@@ -386,7 +386,7 @@ export default function Dashboard() {
 
   return (
     <MainLayout>
-      <div className="p-6 space-y-6">
+      <div className="py-3 px-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

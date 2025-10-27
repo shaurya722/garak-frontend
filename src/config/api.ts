@@ -7,7 +7,8 @@ export const apiConfig = {
   baseUrl: API_BASE_URL,
   endpoints: {
     // Auth
-    authLogin: `${API_BASE_URL}/auth/login`,
+    // authLogin: `${API_BASE_URL}/auth/login`,
+    authCompanyLogin: `${API_BASE_URL}/api/auth/company/login`,
     authRegister: `${API_BASE_URL}/auth/register`,
     authMe: `${API_BASE_URL}/auth/me`,
     // REST Projects (Projects)

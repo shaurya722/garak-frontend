@@ -47,7 +47,7 @@ const SidebarHeader = React.forwardRef<HTMLDivElement, SidebarHeaderProps>(
   ({ className, children, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("flex h-14 items-center border-b px-4", className)}
+      className={cn("flex items-center border-b p-6", className)}
       {...props}
     >
       {children}
@@ -58,10 +58,10 @@ SidebarHeader.displayName = "SidebarHeader"
 
 const SidebarContent = React.forwardRef<HTMLDivElement, SidebarContentProps>(
   ({ className, children, ...props }, ref) => (
-    <div className="flex-1 overflow-auto">
+    <div className="flex-1">
       <div
         ref={ref}
-        className={cn("flex flex-col gap-2 p-4", className)}
+        className={cn("flex flex-col gap-2 p-6", className)}
         {...props}
       >
         {children}
@@ -89,8 +89,8 @@ const SidebarNavItem = React.forwardRef<HTMLDivElement, SidebarNavItemProps>(
     <div
       ref={ref}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-        active && "bg-accent text-accent-foreground",
+        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground h-10",
+        active && "text-[#0A0F2C] bg-[#31B79D]",
         className
       )}
       {...props}

@@ -2,12 +2,24 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Shield, ArrowLeft, Save, TestTube } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -45,24 +57,24 @@ export default function NewConfigurationPage() {
       headers: {},
       req_template_json_object: { message: "$INPUT" },
       response_json: true,
-      response_json_field: "response"
-    }
+      response_json_field: "response",
+    },
   });
 
   const handleInputChange = (field: string, value: string) => {
     if (field.startsWith("rest_generator.")) {
       const subField = field.replace("rest_generator.", "");
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         rest_generator: {
           ...prev.rest_generator,
-          [subField]: value
-        }
+          [subField]: value,
+        },
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [field]: value
+        [field]: value,
       }));
     }
   };
@@ -70,13 +82,19 @@ export default function NewConfigurationPage() {
   const handleAuthTypeChange = (type: string) => {
     setAuthType(type);
     let headers: Record<string, string> = {};
-    
+
     switch (type) {
       case "bearer":
-        headers = { "Authorization": "Bearer $KEY", "Content-Type": "application/json" };
+        headers = {
+          Authorization: "Bearer $KEY",
+          "Content-Type": "application/json",
+        };
         break;
       case "api_key":
-        headers = { "X-Authorization": "$KEY", "Content-Type": "application/json" };
+        headers = {
+          "X-Authorization": "$KEY",
+          "Content-Type": "application/json",
+        };
         break;
       case "custom":
         headers = { "X-API-Key": "$KEY", "Content-Type": "application/json" };
@@ -85,24 +103,24 @@ export default function NewConfigurationPage() {
         headers = { "Content-Type": "application/json" };
     }
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       rest_generator: {
         ...prev.rest_generator,
-        headers
-      }
+        headers,
+      },
     }));
   };
 
   const handleRequestTemplateChange = (value: string) => {
     try {
       const parsed = JSON.parse(value);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         rest_generator: {
           ...prev.rest_generator,
-          req_template_json_object: parsed
-        }
+          req_template_json_object: parsed,
+        },
       }));
     } catch (error) {
       // Invalid JSON, but don't update the state
@@ -138,7 +156,10 @@ export default function NewConfigurationPage() {
 
     setLoading(true);
     try {
-      const { data } = await api.post(apiConfig.endpoints.restConfigs + "/", formData);
+      const { data } = await api.post(
+        apiConfig.endpoints.restConfigs + "/",
+        formData
+      );
       toast.success("Configuration created successfully!");
       router.push(`/projects/${data.config_id}`);
     } catch (error) {
@@ -159,210 +180,322 @@ export default function NewConfigurationPage() {
       toast.success("Configuration test successful!");
     }, 1000);
   };
+  const [selectedType, setSelectedType] = useState("Agentic Scan");
+
+  const handleSelect = (type: string) => {
+    setSelectedType(type);
+  };
 
   return (
-        <MainLayout>
-    
-    <div className="min-h-screen bg-gradient-to-br ">
+    <MainLayout>
+      {/* <div className="py-3 px-6 space-y-6 bg-white"> */}
       {/* Header */}
-      <header className="border-b ">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link href="/projects">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Projects
-                </Button>
-              </Link>
-              <div className="flex items-center space-x-2">
-                <Shield className="h-8 w-8 text-red-600" />
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                  New Configuration
-                </h1>
-              </div>
-            </div>
-          </div>
+      <div className="flex items-center justify-between fixed z-10 p-4 bg-background w-full">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Create Project</h1>
+          <p className="text-muted-foreground">
+            Create a new REST API endpoint Project for security testing
+          </p>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information */}
-          <Card>
+      </div>
+      {/* </div> */}
+      <div className="bg-gradient-to-br py-15">
+        {/* Main Content */}
+        <main className="px-4 pt-15">
+          <Card className="">
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle>Create Project</CardTitle>
               <CardDescription>
-                Provide basic details about your REST API configuration
+                Lorem ipsum Aliquam a dui vel justo fringilla euismod id id
+                enim. Nunc non semper tellus. Pellentesque vitae tellus non dui
+                fermentum hendrerit. In vel imperdiet mi. Aliquam erat volutpat.
+                Cras dapibus orci eu eros tempus efficitur.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="config_name">Configuration Name *</Label>
-                <Input
-                  id="config_name"
-                  value={formData.config_name}
-                  onChange={(e) => handleInputChange("config_name", e.target.value)}
-                  placeholder="e.g., GenAI Conversation API"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange("description", e.target.value)}
-                  placeholder="Optional description of this configuration"
-                  rows={3}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* API Configuration */}
-          <Card>
-            <CardHeader>
-              <CardTitle>API Configuration</CardTitle>
-              <CardDescription>
-                Configure your REST API endpoint details
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="uri">API Endpoint URI *</Label>
-                <Input
-                  id="uri"
-                  value={formData.rest_generator.uri}
-                  onChange={(e) => handleInputChange("rest_generator.uri", e.target.value)}
-                  placeholder="http://localhost:80/genai/conversation"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="method">HTTP Method</Label>
-                <Select
-                  value={formData.rest_generator.method}
-                  onValueChange={(value) => handleInputChange("rest_generator.method", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="get">GET</SelectItem>
-                    <SelectItem value="post">POST</SelectItem>
-                    <SelectItem value="put">PUT</SelectItem>
-                    <SelectItem value="patch">PATCH</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Authentication */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Authentication</CardTitle>
-              <CardDescription>
-                Configure how to authenticate with your API
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="auth_type">Authentication Type</Label>
-                <Select value={authType} onValueChange={handleAuthTypeChange}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No Authentication</SelectItem>
-                    <SelectItem value="bearer">Bearer Token</SelectItem>
-                    <SelectItem value="api_key">API Key (X-Authorization)</SelectItem>
-                    <SelectItem value="custom">Custom Header</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {authType !== "none" && (
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    <strong>Note:</strong> The actual API key will be provided when running security tests. 
-                    The placeholder <code>$KEY</code> will be replaced with your actual key.
-                  </p>
-                  <div className="mt-2 text-xs text-blue-600 dark:text-blue-300">
-                    Current headers: {JSON.stringify(formData.rest_generator.headers, null, 2)}
-                  </div>
+            <CardContent>
+              <form className="flex flex-col gap-5">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="config_name">Name of the project</Label>
+                  <Input
+                    id="config_name"
+                    value={formData.config_name}
+                    onChange={(e) =>
+                      handleInputChange("config_name", e.target.value)
+                    }
+                    placeholder="Project Name"
+                    required
+                  />
                 </div>
-              )}
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="config_name">Type of Project</Label>
+                  <div className="flex gap-2">
+                    {["Red Team", "Blue Team", "Agentic Scan"].map((type) => (
+                      <Button
+                        key={type}
+                        onClick={() => handleSelect(type)}
+                        variant={selectedType === type ? "default" : "outline"}
+                        className="w-1/3"
+                      >
+                        {type}
+                      </Button>
+                    ))}
+                  </div>
+                </div>{" "}
+                {/* <div className="flex flex-col gap-2">
+                  <Label htmlFor="config_name">Type of Project</Label>
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="w-1/3">
+                      Red Team
+                    </Button>
+                    <Button variant="outline" className="w-1/3">
+                      Blue Team
+                    </Button>
+                    <Button variant="default" className="w-1/3">
+                      Agentic Scan
+                    </Button>
+                  </div>
+                </div> */}
+              </form>
             </CardContent>
           </Card>
+        </main>
+        {selectedType === "Red Team" && (
+          <main className="px-4 py-5">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Basic Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Basic Information</CardTitle>
+                  <CardDescription>
+                    Provide basic details about your REST API configuration
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="config_name">Configuration Name *</Label>
+                    <Input
+                      id="config_name"
+                      value={formData.config_name}
+                      onChange={(e) =>
+                        handleInputChange("config_name", e.target.value)
+                      }
+                      placeholder="e.g., GenAI Conversation API"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) =>
+                        handleInputChange("description", e.target.value)
+                      }
+                      placeholder="Optional description of this configuration"
+                      rows={3}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Request Template */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Request Template</CardTitle>
-              <CardDescription>
-                Define the JSON structure for API requests. Use $INPUT as placeholder for test inputs.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="request_template">Request JSON Template *</Label>
-                <Textarea
-                  id="request_template"
-                  value={JSON.stringify(formData.rest_generator.req_template_json_object, null, 2)}
-                  onChange={(e) => handleRequestTemplateChange(e.target.value)}
-                  placeholder='{\n  "message": "$INPUT"\n}'
-                  rows={6}
-                  className="font-mono text-sm"
-                />
-                <p className="text-xs text-gray-600 mt-1">
-                  Use <code>$INPUT</code> as a placeholder where test prompts will be inserted
-                </p>
+              {/* API Configuration */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>API Configuration</CardTitle>
+                  <CardDescription>
+                    Configure your REST API endpoint details
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="uri">API Endpoint URI *</Label>
+                    <Input
+                      id="uri"
+                      value={formData.rest_generator.uri}
+                      onChange={(e) =>
+                        handleInputChange("rest_generator.uri", e.target.value)
+                      }
+                      placeholder="http://localhost:80/genai/conversation"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="method">HTTP Method</Label>
+                    <Select
+                      value={formData.rest_generator.method}
+                      onValueChange={(value) =>
+                        handleInputChange("rest_generator.method", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="get">GET</SelectItem>
+                        <SelectItem value="post">POST</SelectItem>
+                        <SelectItem value="put">PUT</SelectItem>
+                        <SelectItem value="patch">PATCH</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Authentication */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Authentication</CardTitle>
+                  <CardDescription>
+                    Configure how to authenticate with your API
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="auth_type">Authentication Type</Label>
+                    <Select
+                      value={authType}
+                      onValueChange={handleAuthTypeChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Authentication</SelectItem>
+                        <SelectItem value="bearer">Bearer Token</SelectItem>
+                        <SelectItem value="api_key">
+                          API Key (X-Authorization)
+                        </SelectItem>
+                        <SelectItem value="custom">Custom Header</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {authType !== "none" && (
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        <strong>Note:</strong> The actual API key will be
+                        provided when running security tests. The placeholder{" "}
+                        <code>$KEY</code> will be replaced with your actual key.
+                      </p>
+                      <div className="mt-2 text-xs text-blue-600 dark:text-blue-300">
+                        Current headers:{" "}
+                        {JSON.stringify(
+                          formData.rest_generator.headers,
+                          null,
+                          2
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Request Template */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Request Template</CardTitle>
+                  <CardDescription>
+                    Define the JSON structure for API requests. Use $INPUT as
+                    placeholder for test inputs.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="request_template">
+                      Request JSON Template *
+                    </Label>
+                    <Textarea
+                      id="request_template"
+                      value={JSON.stringify(
+                        formData.rest_generator.req_template_json_object,
+                        null,
+                        2
+                      )}
+                      onChange={(e) =>
+                        handleRequestTemplateChange(e.target.value)
+                      }
+                      placeholder='{\n  "message": "$INPUT"\n}'
+                      rows={6}
+                      className="font-mono text-sm"
+                    />
+                    <p className="text-xs text-gray-600 mt-1">
+                      Use <code>$INPUT</code> as a placeholder where test
+                      prompts will be inserted
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Response Configuration */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Response Configuration</CardTitle>
+                  <CardDescription>
+                    Configure how to extract the response from your API
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="response_field">
+                      Response Field Path *
+                    </Label>
+                    <Input
+                      id="response_field"
+                      value={formData.rest_generator.response_json_field}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "rest_generator.response_json_field",
+                          e.target.value
+                        )
+                      }
+                      placeholder="response"
+                      required
+                    />
+                    <p className="text-xs text-gray-600 mt-1">
+                      JSON field path to extract the response text (e.g.,{" "}
+                      <code>response</code>, <code>data.message</code>,{" "}
+                      <code>choices.0.text</code>)
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Actions */}
+              <div className="flex space-x-4">
+                <Button type="submit" disabled={loading} className="flex-1">
+                  <Save className="h-4 w-4 mr-2" />
+                  {loading ? "Creating..." : "Create Configuration"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={testConfiguration}
+                >
+                  <TestTube className="h-4 w-4 mr-2" />
+                  Test Configuration
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Response Configuration */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Response Configuration</CardTitle>
-              <CardDescription>
-                Configure how to extract the response from your API
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="response_field">Response Field Path *</Label>
-                <Input
-                  id="response_field"
-                  value={formData.rest_generator.response_json_field}
-                  onChange={(e) => handleInputChange("rest_generator.response_json_field", e.target.value)}
-                  placeholder="response"
-                  required
-                />
-                <p className="text-xs text-gray-600 mt-1">
-                  JSON field path to extract the response text (e.g., <code>response</code>, <code>data.message</code>, <code>choices.0.text</code>)
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Actions */}
-          <div className="flex space-x-4">
-            <Button type="submit" disabled={loading} className="flex-1">
-              <Save className="h-4 w-4 mr-2" />
-              {loading ? "Creating..." : "Create Configuration"}
-            </Button>
-            <Button type="button" variant="outline" onClick={testConfiguration}>
-              <TestTube className="h-4 w-4 mr-2" />
-              Test Configuration
-            </Button>
-          </div>
-        </form>
-      </main>
-    </div>
+            </form>
+          </main>
+        )}
+        {selectedType === "Agentic Scan" && (
+          <main className="px-4 py-5">
+            <Card>
+              <CardHeader>
+                <CardTitle>Agentic Scan</CardTitle>
+                <CardDescription>
+                  Automatically analyze and audit your REST API configuration
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button onClick={() => router.push("/agentic-radar/scan")}>
+                  Start Scan
+                </Button>
+              </CardContent>
+            </Card>
+          </main>
+        )}
+      </div>
     </MainLayout>
   );
 }

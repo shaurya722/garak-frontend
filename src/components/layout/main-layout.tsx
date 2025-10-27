@@ -8,7 +8,9 @@ import {
   Activity, 
   Home,
   FileText,
-  Radar
+  Radar,
+  LogOut,
+  User
 } from "lucide-react"
 import { 
   Sidebar, 
@@ -18,7 +20,9 @@ import {
   SidebarNavItem,
   MobileSidebar 
 } from "@/components/ui/sidebar"
-// import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
+import { ProtectedRoute } from "@/components/auth/protected-route"
+import { useAuth } from "@/contexts/auth-context"
 import Image from "next/image"
 import logo from "../../../public/Frame 3020.svg"
 interface MainLayoutProps {
@@ -26,6 +30,11 @@ interface MainLayoutProps {
 }
 
 const navigation = [
+  {
+    name: "Getting Started",
+    href: "/getting-start",
+    icon: Home,
+  },
   {
     name: "Dashboard",
     href: "/",
@@ -65,13 +74,12 @@ const navigation = [
 
 function AppSidebar() {
   const pathname = usePathname()
+  const { user, logout } = useAuth()
 
   return (
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2">
-          {/* <Shield className="h-6 w-6 text-red-600" /> */}
-          {/* <span className="font-semibold text-lg">Aynigma</span> */}
           <Image src={logo} alt='logo' width={150} />
         </div>
       </SidebarHeader>
@@ -91,6 +99,28 @@ function AppSidebar() {
             )
           })}
         </SidebarNav>
+        
+        {/* User Info and Logout */}
+        <div className="mt-auto p-4 border-t">
+          <div className="flex items-center gap-2 mb-3">
+            <User className="h-4 w-4" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{user?.email}</p>
+              {user?.company && (
+                <p className="text-xs text-muted-foreground truncate">{user.company}</p>
+              )}
+            </div>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={logout}
+            className="w-full"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
+          </Button>
+        </div>
       </SidebarContent>
     </Sidebar>
   )
@@ -98,30 +128,31 @@ function AppSidebar() {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   return (
-    <div className="flex h-screen bg-background">
-      {/* Desktop Sidebar - Fixed */}
-      <div className="hidden md:flex fixed left-0 top-0 h-full z-50">
-        <AppSidebar />
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden md:ml-64">
-        {/* Mobile Header */}
-        <div className="flex items-center justify-between p-4 border-b md:hidden">
-          <div className="flex items-center gap-2">
-            {/* <Shield className="h-6 w-6 text-red-600" /> */}
-            <Image src={logo} alt='logo' width={150} />
-          </div>
-          <MobileSidebar>
-            <AppSidebar />
-          </MobileSidebar>
+    <ProtectedRoute>
+      <div className="flex bg-background">
+        {/* Desktop Sidebar - Fixed */}
+        <div className="hidden md:flex fixed left-0 top-0 h-full z-50">
+          <AppSidebar />
         </div>
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden md:ml-64">
+          {/* Mobile Header */}
+          <div className="flex items-center justify-between p-4 border-b md:hidden">
+            <div className="flex items-center gap-2">
+              <Image src={logo} alt='logo' width={150} />
+            </div>
+            <MobileSidebar>
+              <AppSidebar />
+            </MobileSidebar>
+          </div>
+
+          {/* Page Content */}
+          <main className="flex-1">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   )
 }

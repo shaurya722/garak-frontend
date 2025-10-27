@@ -16,6 +16,8 @@ import {
   Play
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
+import rocket from '@/assets/Vector (17).svg'
 import MainLayout from "@/components/layout/main-layout";
 import api from "@/lib/axios";
 import { apiConfig, getRestConfigUrl } from "@/config/api";
@@ -91,7 +93,7 @@ export default function ProjectsPage() {
 
   return (
     <MainLayout>
-      <div className="p-6 space-y-6">
+      <div className="py-3 px-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -130,9 +132,10 @@ export default function ProjectsPage() {
           <CardContent>
             {filteredProjects.length === 0 ? (
               <div className="text-center py-12">
-                <Settings className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                {/* <Settings className="h-12 w-12 mx-auto mb-4 text-gray-400" /> */}
+                <Image src={rocket} alt='rocket' className="mx-auto mb-4 text-gray-400"/>
                 <h3 className="text-lg font-medium mb-2">
-                  {searchTerm ? "No projects found" : "No projects created"}
+                  {searchTerm ? "No projects found !" : "No Projects created !"}
                 </h3>
                 <p className="text-muted-foreground mb-4">
                   {searchTerm 
@@ -142,7 +145,7 @@ export default function ProjectsPage() {
                 </p>
                 {!searchTerm && (
                   <Link href="/projects/new">
-                    <Button>
+                    <Button variant="default" size="lg">
                       <Plus className="h-4 w-4 mr-2" />
                       Create Project
                     </Button>

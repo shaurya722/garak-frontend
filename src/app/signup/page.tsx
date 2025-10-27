@@ -10,6 +10,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import api from "@/lib/axios";
 import { apiConfig } from "@/config/api";
+import { PublicRoute } from "@/components/auth/public-route";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -35,35 +36,37 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center  p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Create an account</CardTitle>
-          <CardDescription>Sign up to get started</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating..." : "Create account"}
-            </Button>
-          </form>
-          <p className="text-sm text-muted-foreground mt-4">
-            Already have an account? <Link href="/login" className="underline">Sign in</Link>
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    <PublicRoute redirectIfAuthenticated={true}>
+      <div className="min-h-screen flex items-center justify-center  p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Create an account</CardTitle>
+            <CardDescription>Sign up to get started</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={onSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Creating..." : "Create account"}
+              </Button>
+            </form>
+            <p className="text-sm text-muted-foreground mt-4">
+              Already have an account? <Link href="/login" className="underline">Sign in</Link>
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </PublicRoute>
   );
 }
