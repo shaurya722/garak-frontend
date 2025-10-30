@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { toast } from "sonner";
-import api from "@/lib/axios";
+import api from "@/api/axios";
 import { apiConfig } from "@/config/api";
 import { PublicRoute } from "@/components/auth/public-route";
 
@@ -23,7 +23,7 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post(apiConfig.endpoints.authRegister, { email, password, name });
+      await api.post(apiConfig.endpoints.authCompanyRegister, { email, password, name });
       toast.success("Account created. Please sign in.");
       router.replace("/login");
     } catch (err: unknown) {

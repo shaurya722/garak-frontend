@@ -19,8 +19,9 @@ import Link from "next/link";
 import Image from "next/image";
 import rocket from '@/assets/Vector (17).svg'
 import MainLayout from "@/components/layout/main-layout";
-import api from "@/lib/axios";
+import api from "@/api/axios";
 import { apiConfig, getRestConfigUrl } from "@/config/api";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 
 interface RestConfig {
   config_id: string;
@@ -39,7 +40,7 @@ interface RestConfig {
   updated_at: string;
 }
 
-export default function ProjectsPage() {
+function ProjectsPageContent() {
   const [configs, setConfigs] = useState<RestConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -228,5 +229,13 @@ export default function ProjectsPage() {
         </Card>
       </div>
     </MainLayout>
+  );
+}
+
+export default function ProjectsPage() {
+  return (
+    <ProtectedRoute>
+      <ProjectsPageContent />
+    </ProtectedRoute>
   );
 }

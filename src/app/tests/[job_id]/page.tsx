@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import SecurityReportPDF from "../../components/SecurityReportPDF";
-import api from "@/lib/axios";
+import api from "@/api/axios";
 import { getJobStatusUrl, getJobUrl } from "@/config/api";
 import { useCallback } from "react";
 import MainLayout from "@/components/layout/main-layout";

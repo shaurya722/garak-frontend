@@ -20,16 +20,19 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import MainLayout from "@/components/layout/main-layout";
-import api from "@/lib/axios";
+import api from "@/api/axios";
 import { apiConfig, getJobUrl } from "@/config/api";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 
 interface TestJob {
   job_id: string;
   status: "PENDING" | "STARTED" | "SUCCESS" | "FAILURE" | "REVOKED";
-  config_name?: string;
-  probes?: string[];
+  config_name: string;
+  probes: string[];
+  model_type: string;
   created_at: string;
-  completed_at?: string;
+  completed_at: string | null;
+  error_message: string | null;
 }
 
 const statusConfig = {
@@ -40,7 +43,7 @@ const statusConfig = {
   REVOKED: { icon: AlertCircle, color: "bg-gray-100 text-gray-800", label: "Cancelled" },
 };
 
-export default function TestsPage() {
+function TestsPageContent() {
   const [jobs, setJobs] = useState<TestJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -55,24 +58,19 @@ export default function TestsPage() {
   }, []);
 
   const fetchJobs = async () => {
+    setLoading(true);
     try {
-      const { data } = await api.get(apiConfig.endpoints.jobs);
-      type ApiJob = {
-        job_id: string;
-        status: TestJob["status"];
-        config_name?: string;
-        probes?: string[];
-        created_at: string;
-        completed_at?: string;
-      };
-      const jobsArray: ApiJob[] = Array.isArray(data.jobs) ? (data.jobs as ApiJob[]) : [];
-      const transformedJobs: TestJob[] = jobsArray.map((job) => ({
-        job_id: job.job_id,
-        status: job.status,
-        config_name: job.config_name,
-        probes: job.probes,
-        created_at: job.created_at,
-        completed_at: job.completed_at,
+      const response = await api.get(apiConfig.endpoints.jobs);
+      // Map the API response to match your frontend's expected structure
+      const transformedJobs = response.data.items.map((job: any) => ({
+        job_id: job.job_id || '',
+        status: job.status || 'PENDING',
+        config_name: job.config_name || 'Unnamed Job',
+        probes: job.probes || [],
+        model_type: job.model_type || 'N/A',
+        created_at: job.created_at || new Date().toISOString(),
+        completed_at: job.completed_at || null,
+        error_message: job.error_message || null
       }));
       setJobs(transformedJobs);
     } catch (error) {
@@ -310,5 +308,13 @@ export default function TestsPage() {
           </Card>
       </div>
     </MainLayout>
+  );
+}
+
+export default function TestsPage() {
+  return (
+    <ProtectedRoute>
+      <TestsPageContent />
+    </ProtectedRoute>
   );
 }

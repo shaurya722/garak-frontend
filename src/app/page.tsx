@@ -32,6 +32,7 @@ import MainLayout from "@/components/layout/main-layout";
 import { apiConfig } from "@/config/api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 
 interface RestConfig {
   config_id: string;
@@ -65,7 +66,7 @@ interface DashboardStats {
   activeTests: number;
 }
 
-export default function Dashboard() {
+function DashboardContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [recentConfigs, setRecentConfigs] = useState<RestConfig[]>([]);
@@ -385,6 +386,7 @@ export default function Dashboard() {
   }
 
   return (
+
     <MainLayout>
       <div className="py-3 px-6 space-y-6">
         {/* Header */}
@@ -660,5 +662,13 @@ export default function Dashboard() {
         </div>
       </div>
     </MainLayout>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
   );
 }

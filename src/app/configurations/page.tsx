@@ -23,9 +23,10 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
-import api from "@/lib/axios";
+import api from "@/api/axios";
 import { apiConfig, getRestConfigUrl } from "@/config/api";
 import MainLayout from "@/components/layout/main-layout";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 
 interface RestConfig {
   config_id: string;
@@ -44,7 +45,7 @@ interface RestConfig {
   updated_at: string;
 }
 
-export default function ProjectsPage() {
+function ConfigurationsPageContent() {
   const [configs, setConfigs] = useState<RestConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -388,5 +389,13 @@ export default function ProjectsPage() {
         </main>
       </div>
     </MainLayout>
+  );
+}
+
+export default function ConfigurationsPage() {
+  return (
+    <ProtectedRoute>
+      <ConfigurationsPageContent />
+    </ProtectedRoute>
   );
 }

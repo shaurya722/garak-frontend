@@ -1,11 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/axios';
+import api from '@/api/axios';
 import { apiConfig } from '@/config/api';
 import { toast } from 'sonner';
 
+// Define your interfaces
 export interface User {
   id: string;
   email: string;
@@ -27,7 +28,6 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
-  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,40 +51,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const isAuthenticated = !!user;
 
-  // Get token from cookies
-  const getToken = (): string | null => {
-    if (typeof document === 'undefined') return null;
-    const match = document.cookie.match(/(?:^|; )token=([^;]*)/);
-    return match ? decodeURIComponent(match[1]) : null;
-  };
-
-  // Set token in cookies
-  const setToken = (token: string, rememberMe: boolean = false) => {
-    const maxAge = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 7; // 30 days or 7 days
-    document.cookie = `token=${encodeURIComponent(token)}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
-  };
-
-  // Remove token from cookies
-  const removeToken = () => {
-    document.cookie = 'token=; Path=/; Max-Age=0; SameSite=Lax';
-  };
-
-  // Fetch current user data
-  const refreshUser = useCallback(async () => {
-    try {
-      const token = getToken();
-      if (!token) {
+  // Check auth status on mount - simple token check
+  useEffect(() => {
+    const checkAuth = () => {
+      try {
+        const token = localStorage.getItem('token');
+        
+        if (token) {
+          // Token exists, create a minimal user object
+          // You can decode the JWT token here if needed to get user info
+          setUser({
+            id: '1',
+            email: 'user@example.com' // Replace with actual user data from token if available
+          });
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        // Clear invalid data
+        localStorage.removeItem('token');
         setUser(null);
-        return;
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      const response = await api.get(apiConfig.endpoints.authMe);
-      setUser(response.data);
-    } catch (error) {
-      console.error('Failed to fetch user:', error);
-      setUser(null);
-      removeToken();
-    }
+    checkAuth();
   }, []);
 
   // Login function
@@ -92,46 +83,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setIsLoading(true);
       
-      // Send complete company login payload
       const response = await api.post(apiConfig.endpoints.authCompanyLogin, {
         company: credentials.company,
         email: credentials.email,
         password: credentials.password,
         rememberMe: credentials.rememberMe
       });
-      console.log('Login response:', response);
       
-      const token = response?.data?.token || response?.data?.access_token || response?.data?.jwt;
-      if (!token) {
-        throw new Error('No token returned by server');
+      const accessToken = response.data.data?.accessToken || response.data.accessToken;
+      
+      if (!accessToken) {
+        throw new Error('No access token received');
       }
-
-      // Store token
-      setToken(token, credentials.rememberMe);
-
-      // Fetch user data
-      await refreshUser();
-
-      toast.success('Logged in successfully');
-    } catch (error: unknown) {
+      
+      // Create user object from response
+      const userData: User = {
+        id: response.data.data?.id || response.data.id || '1',
+        email: credentials.email,
+        company: credentials.company,
+        name: response.data.data?.name || response.data.name,
+        role: response.data.data?.role || response.data.role
+      };
+           
+      localStorage.setItem('token', accessToken);
+      setUser(userData);
+      
+      toast.success('Login successful');
+      router.push('/');
+      
+    } catch (error: any) {
       console.error('Login failed:', error);
-      
-      let message = 'Login failed';
-      
-      if (error instanceof Error) {
-        message = error.message;
-      } else {
-        const axiosError = error as { response?: { status?: number; data?: { message?: string; detail?: string } } };
-        
-        if (axiosError?.response?.status === 404) {
-          message = 'Company login endpoint not found. Please ensure your backend implements POST /api/auth/company/login';
-        } else {
-          message = axiosError?.response?.data?.message || 
-                   axiosError?.response?.data?.detail || 
-                   'Login failed';
-        }
-      }
-      
+      const message = error.response?.data?.message || error.message || 'Login failed';
       toast.error(message);
       throw error;
     } finally {
@@ -141,36 +123,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Logout function
   const logout = () => {
+    // Clear localStorage
+    localStorage.removeItem('token');
     setUser(null);
-    removeToken();
-    toast.success('Logged out successfully');
     router.push('/login');
-  };
-
-  // Initialize auth state on mount
-  useEffect(() => {
-    const initAuth = async () => {
-      const token = getToken();
-      if (token) {
-        await refreshUser();
-      }
-      setIsLoading(false);
-    };
-
-    initAuth();
-  }, [refreshUser]);
-
-  const value: AuthContextType = {
-    user,
-    isLoading,
-    isAuthenticated,
-    login,
-    logout,
-    refreshUser,
+    toast.success('Logged out successfully');
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, isLoading, isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

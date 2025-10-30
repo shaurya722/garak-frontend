@@ -7,10 +7,14 @@ export const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-function getTokenFromCookies(): string | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/(?:^|; )token=([^;]*)/);
-  return match ? decodeURIComponent(match[1]) : null;
+function getTokenFromLocalStorage(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const token = window.localStorage.getItem("token");
+    return token && token.trim() !== "" ? token : null;
+  } catch {
+    return null;
+  }
 }
 
 function getTenantIdFromLocalStorage(): string | null {
@@ -25,7 +29,7 @@ function getTenantIdFromLocalStorage(): string | null {
 
 // Attach Authorization and X-Tenant-ID headers if present
 api.interceptors.request.use((config) => {
-  const token = getTokenFromCookies();
+  const token = getTokenFromLocalStorage();
   const tenantId = getTenantIdFromLocalStorage();
 
   const headers =
@@ -40,13 +44,15 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Basic 401 handler
+// Basic 401 handler - redirect to login on unauthorized
 api.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error?.response?.status === 401 && typeof window !== "undefined") {
-      // Clear token cookie
-      document.cookie = `token=; Max-Age=0; path=/`;
+      // Clear token and user from localStorage
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      // Redirect to login if not already on login page
       if (!window.location.pathname.startsWith("/login")) {
         const next = encodeURIComponent(window.location.pathname + window.location.search);
         window.location.href = `/login?next=${next}`;

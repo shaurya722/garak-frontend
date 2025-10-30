@@ -14,7 +14,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { apiConfig } from "@/config/api";
 import MainLayout from "@/components/layout/main-layout";
-import api from "@/lib/axios";
+import api from "@/api/axios";
 
 interface PolicyForm {
   policy_name: string;

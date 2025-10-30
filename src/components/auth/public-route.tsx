@@ -22,12 +22,13 @@ export function PublicRoute({
   const router = useRouter();
 
   useEffect(() => {
+    // Only redirect if we're done loading and user is authenticated
     if (!isLoading && isAuthenticated && redirectIfAuthenticated) {
-      router.push(redirectTo);
+      router.replace(redirectTo);
     }
   }, [isAuthenticated, isLoading, redirectIfAuthenticated, router, redirectTo]);
 
-  // Show loading state
+  // Show loading state while checking auth
   if (isLoading) {
     return fallback || (
       <div className="min-h-screen flex items-center justify-center">
@@ -39,12 +40,19 @@ export function PublicRoute({
     );
   }
 
-  // Show nothing while redirecting
+  // Show nothing while redirecting to prevent flash of login page
   if (isAuthenticated && redirectIfAuthenticated) {
-    return null;
+    return fallback || (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Redirecting...</span>
+        </div>
+      </div>
+    );
   }
 
-  // Render children
+  // Render children only if not authenticated
   return <>{children}</>;
 }
 

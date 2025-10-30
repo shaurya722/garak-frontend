@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, Star, Play, FileText } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import api from "@/lib/axios";
+import api from "@/api/axios";
 import { getPolicyUrl, apiConfig } from "@/config/api";
 import MainLayout from "@/components/layout/main-layout";
 

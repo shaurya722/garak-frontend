@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Shield, ArrowLeft, Save, TestTube } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import api from "@/lib/axios";
+import api from "@/api/axios";
 import { getRestConfigUrl, apiConfig } from "@/config/api";
 
 interface RestGeneratorConfig {

@@ -35,11 +35,13 @@ function LoginForm() {
         rememberMe
       });
       
-      router.replace(next);
+      // Wait a bit for state to propagate, then redirect
+      setTimeout(() => {
+        router.replace(next);
+      }, 100);
     } catch (error) {
       // Error handling is done in the auth context
       console.error('Login error:', error);
-    } finally {
       setLoading(false);
     }
   };

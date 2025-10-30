@@ -12,7 +12,7 @@ import { ArrowLeft, Save, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { apiConfig, getPolicyUrl } from "@/config/api";
-import api from "@/lib/axios";
+import api from "@/api/axios";
 
 
 interface PolicyForm {

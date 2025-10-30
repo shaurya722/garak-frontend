@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import api from "@/lib/axios";
+import api from "@/api/axios";
 import { getRestConfigUrl } from "@/config/api";
 import MainLayout from "@/components/layout/main-layout";
 

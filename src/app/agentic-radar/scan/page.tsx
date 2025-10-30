@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Upload, FileText, Download, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import api from "@/lib/axios";
+import api from "@/api/axios";
 import { apiConfig } from "@/config/api";
 import MainLayout from "@/components/layout/main-layout";
 

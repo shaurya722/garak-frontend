@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "@/components/providers";
-import { dmSans } from "@/lib/fonts";
+import { dmSans } from "@/api/fonts";
 
 export const metadata: Metadata = {
   title: "Aynigma",
@@ -9,8 +9,6 @@ export const metadata: Metadata = {
     icon: "/favicon.svg",
   },
 };
-
-
 
 export default function RootLayout({
   children,

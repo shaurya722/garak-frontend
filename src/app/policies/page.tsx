@@ -10,8 +10,9 @@ import { Plus, Edit, Trash2, Star, Eye, Search, FileText } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { apiConfig, getPolicyUrl } from "@/config/api";
-import api from "@/lib/axios";
+import api from "@/api/axios";
 import MainLayout from "@/components/layout/main-layout";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 
 interface Policy {
   policy_id: string;
@@ -24,7 +25,7 @@ interface Policy {
   updated_at: string;
 }
 
-export default function PoliciesPage() {
+function PoliciesPageContent() {
   const [loading, setLoading] = useState(true);
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -242,5 +243,13 @@ export default function PoliciesPage() {
         </Card>
       </div>
     </MainLayout>
+  );
+}
+
+export default function PoliciesPage() {
+  return (
+    <ProtectedRoute>
+      <PoliciesPageContent />
+    </ProtectedRoute>
   );
 }

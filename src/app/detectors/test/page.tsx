@@ -17,7 +17,7 @@ import { ArrowLeft, TestTube, AlertTriangle, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { apiConfig } from "@/config/api";
-import api from "@/lib/axios";
+import api from "@/api/axios";
 import MainLayout from "@/components/layout/main-layout";
 
 interface Detector {
