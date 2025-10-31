@@ -4,115 +4,55 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Shield, ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { Shield, Edit, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import api from "@/api/axios";
-import { apiConfig } from "@/config/api";
-
-interface Detector {
-  id: string;
-  detectorName: string;
-  description: string;
-  detectorType: string;
-  confidence: number;
-  regex: string[];
-  createdAt: string;
-  updatedAt: string;
-  creationType?: string;
-}
+import { useDetector, useDeleteDetector } from "@/hooks";
+import { LoadingSpinner, EmptyState } from "@/components/shared";
+import { DETECTOR_TYPE_COLORS, ROUTES } from "@/constants";
+import { formatPercentage } from "@/lib/utils";
 
 export function DetectorView({ detectorId }: { detectorId: string }) {
   const router = useRouter();
-  const [detector, setDetector] = useState<Detector | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: detector, isLoading, error } = useDetector(detectorId);
+  const deleteMutation = useDeleteDetector();
 
-  useEffect(() => {
-    const fetchDetector = async () => {
-      try {
-        // For testing with the provided data, you can uncomment this:
-        // const mockData = {
-        //   id: "adf9872e-a2c2-4b1f-87f0-dcd1992cfb46",
-        //   detectorName: "bbbbb",
-        //   description: "dfgdfgdfgdfgdfgdfgdfg",
-        //   detectorType: "HEURISTIC",
-        //   confidence: 0.7,
-        //   regex: [
-        //     '(?i)(?:api[_-]?key|secret)[^:\\n]*[:=]\\s*[A-Za-z0-9\\-\\._]{16,}',
-        //     'ghp_[A-Za-z0-9]{36}'
-        //   ],
-        //   createdAt: "2025-10-30T06:36:21.987Z",
-        //   updatedAt: "2025-10-30T07:04:49.470Z",
-        //   creationType: "External"
-        // };
-        // setDetector(mockData);
-        
-        const response = await api.get(apiConfig.endpoints.getDetector(detectorId));
-        const data = response.data.data?.detector || response.data;
-        setDetector(data);
-        console.log('Detector data:', data);
-      } catch (error) {
-        console.error("Failed to fetch detector:", error);
-        toast.error("Failed to load detector details");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (detectorId) {
-      fetchDetector();
-    }
-  }, [detectorId]);
-
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!confirm("Are you sure you want to delete this detector?")) return;
 
-    try {
-      await api.delete(apiConfig.endpoints.deleteDetector(detectorId));
-      toast.success("Detector deleted successfully");
-      router.push("/detectors");
-    } catch (error) {
-      console.error("Failed to delete detector:", error);
-      toast.error("Failed to delete detector");
-    }
+    deleteMutation.mutate(detectorId, {
+      onSuccess: () => {
+        router.push(ROUTES.DETECTORS);
+      },
+    });
   };
 
   const getDetectorTypeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      regex: "bg-blue-100 text-blue-800",
-      heuristic: "bg-green-100 text-green-800",
-      classifier: "bg-purple-100 text-purple-800",
-      embedding: "bg-orange-100 text-orange-800",
-      pii: "bg-yellow-100 text-yellow-800",
-    };
-    return colors[type.toLowerCase()] || "bg-gray-100 text-gray-800";
+    return DETECTOR_TYPE_COLORS[type] || DETECTOR_TYPE_COLORS.default;
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+        <div className="text-center space-y-4">
+          <LoadingSpinner size="lg" />
           <p className="text-muted-foreground">Loading detector details...</p>
         </div>
       </div>
     );
   }
 
-  if (!detector) {
+  if (error || !detector) {
     return (
-      <div className="text-center py-12">
-        <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium">Detector not found</h3>
-        <p className="text-muted-foreground mt-2">
-          The requested detector could not be found.
-        </p>
-        <Button className="mt-4" onClick={() => router.push("/detectors")}>
-          Back to Detectors
-        </Button>
-      </div>
+      <EmptyState
+        icon={Shield}
+        title="Detector not found"
+        description="The requested detector could not be found."
+        action={{
+          label: "Back to Detectors",
+          onClick: () => router.push(ROUTES.DETECTORS),
+        }}
+      />
     );
   }
 
@@ -127,14 +67,18 @@ export function DetectorView({ detectorId }: { detectorId: string }) {
         </div>
         <div className="flex space-x-2">
           <Button variant="outline" asChild>
-            <Link href={`/detectors/${detectorId}/edit`}>
+            <Link href={ROUTES.DETECTOR_EDIT(detectorId)}>
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Link>
           </Button>
-          <Button variant="destructive" onClick={handleDelete}>
+          <Button 
+            variant="destructive" 
+            onClick={handleDelete}
+            disabled={deleteMutation.isPending}
+          >
             <Trash2 className="h-4 w-4 mr-2" />
-            Delete
+            {deleteMutation.isPending ? "Deleting..." : "Delete"}
           </Button>
         </div>
       </div>
@@ -171,7 +115,7 @@ export function DetectorView({ detectorId }: { detectorId: string }) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{detector.confidence}</div>
+            <div className="text-2xl font-bold">{formatPercentage(detector.confidence)}</div>
           </CardContent>
         </Card>
       </div>

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "@/components/providers";
-import { dmSans } from "@/api/fonts";
+import { dmSans } from "@/style/fonts/fonts";
 
 export const metadata: Metadata = {
   title: "Aynigma",
