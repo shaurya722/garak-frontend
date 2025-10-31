@@ -16,9 +16,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
-import api from "@/api/axios";
-import { apiConfig } from "@/config/api";
+import { useDetectorTypes, useDetector, useCreateDetector, useUpdateDetector } from "@/hooks";
+import { ROUTES, DEFAULT_CONFIDENCE_VALUE } from "@/constants";
+import { LoadingSpinner } from "@/components/shared";
 
 const detectorFormSchema = z.object({
   detectorName: z.string().min(2, "Detector name must be at least 2 characters"),
@@ -45,11 +45,19 @@ interface DetectorFormProps {
 
 export function DetectorForm({ mode = "create", detectorId, onSuccess }: DetectorFormProps) {
   const router = useRouter();
-  const [detectorTypes, setDetectorTypes] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
   const [regexInput, setRegexInput] = useState("");
 
   const isEditMode = mode === "edit";
+
+  // Fetch detector types using hook
+  const { data: detectorTypes = [] } = useDetectorTypes();
+
+  // Fetch detector data in edit mode using hook
+  const { data: existingDetector, isLoading: loadingDetector } = useDetector(detectorId || "");
+
+  // Mutations
+  const createMutation = useCreateDetector();
+  const updateMutation = useUpdateDetector();
 
   const form = useForm<DetectorFormValues>({
     resolver: zodResolver(detectorFormSchema),
@@ -57,74 +65,52 @@ export function DetectorForm({ mode = "create", detectorId, onSuccess }: Detecto
       detectorName: "",
       description: "",
       detectorType: "",
-      confidence: "0.7",
+      confidence: DEFAULT_CONFIDENCE_VALUE.toString(),
       regex: [],
     },
   });
 
   const { control, reset } = form;
 
-  // Fetch detector types
+  // Load existing detector data when in edit mode
   useEffect(() => {
-    const fetchTypes = async () => {
-      try {
-        const res = await api.get(apiConfig.endpoints.detectorsTypes);
-        setDetectorTypes(res.data.data?.detectorTypes || []);
-      } catch {
-        toast.error("Failed to load detector types");
-      }
-    };
-    fetchTypes();
-  }, []);
-
-  // Fetch existing detector data in edit mode
-  useEffect(() => {
-    const fetchDetector = async () => {
-      if (!isEditMode || !detectorId) return;
-      try {
-        const res = await api.get(apiConfig.endpoints.getDetector(detectorId));
-        const detector = res.data.data.detector || res.data;
-console.log('sdfhshfg',detector)
-        reset({
-          detectorName: detector.detectorName || detector.name || "",
-          description: detector.description || "",
-          detectorType: detector.detectorType || detector.detector_type || "",
-          confidence: (detector.confidence || detector.confidence_threshold)?.toString() || "0.7",
-          regex: detector.regex || detector.patterns || [],
-        });
-      } catch (err) {
-        toast.error("Failed to load detector details");
-      }
-    };
-    fetchDetector();
-  }, [isEditMode, detectorId, reset]);
+    if (isEditMode && existingDetector) {
+      reset({
+        detectorName: existingDetector.detectorName || "",
+        description: existingDetector.description || "",
+        detectorType: existingDetector.detectorType || "",
+        confidence: existingDetector.confidence?.toString() || DEFAULT_CONFIDENCE_VALUE.toString(),
+        regex: existingDetector.regex || [],
+      });
+    }
+  }, [isEditMode, existingDetector, reset]);
 
   const onSubmit: SubmitHandler<DetectorFormValues> = async (data) => {
-    setLoading(true);
-    try {
-      const payload = {
-        detectorName: data.detectorName,
-        description: data.description,
-        detectorType: data.detectorType.toUpperCase(),
-        confidence: parseFloat(data.confidence),
-        regex: data.regex,
-      };
+    const payload = {
+      detectorName: data.detectorName,
+      description: data.description,
+      detectorType: data.detectorType.toUpperCase(),
+      confidence: parseFloat(data.confidence),
+      regex: data.regex,
+    };
 
-      if (isEditMode) {
-        await api.put(apiConfig.endpoints.updateDetector(detectorId!), payload);
-        toast.success("Detector updated successfully");
-      } else {
-        await api.post(apiConfig.endpoints.detectorsCreate, payload);
-        toast.success("Detector created successfully");
-      }
-
-      onSuccess?.();
-      router.push("/detectors");
-      router.refresh();
-    } catch {
-      toast.error(isEditMode ? "Failed to update detector" : "Failed to create detector");
-    } finally {
-      setLoading(false);
+    if (isEditMode && detectorId) {
+      updateMutation.mutate(
+        { id: detectorId, payload },
+        {
+          onSuccess: () => {
+            onSuccess?.();
+            router.push(ROUTES.DETECTORS);
+          },
+        }
+      );
+    } else {
+      createMutation.mutate(payload, {
+        onSuccess: () => {
+          onSuccess?.();
+          router.push(ROUTES.DETECTORS);
+        },
+      });
     }
   };
 
@@ -244,11 +230,21 @@ console.log('sdfhshfg',detector)
         </div>
 
         <div className="flex justify-end space-x-4">
-          <Button type="button" variant="outline" onClick={() => router.back()} disabled={loading}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => router.back()} 
+            disabled={createMutation.isPending || updateMutation.isPending}
+          >
             Cancel
           </Button>
-          <Button type="submit" disabled={loading}>
-            {isEditMode ? "Update Detector" : "Create Detector"}
+          <Button 
+            type="submit" 
+            disabled={createMutation.isPending || updateMutation.isPending}
+          >
+            {createMutation.isPending || updateMutation.isPending 
+              ? "Saving..." 
+              : isEditMode ? "Update Detector" : "Create Detector"}
           </Button>
         </div>
       </form>

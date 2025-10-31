@@ -111,7 +111,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       toast.success('Login successful');
       router.push('/');
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('Login failed:', error);
       const message = error.response?.data?.message || error.message || 'Login failed';
       toast.error(message);
