@@ -16,7 +16,7 @@ import { getErrorMessage } from "@/lib/utils";
  */
 export function useDetectors(params: DetectorListParams = {}) {
   return useQuery({
-    queryKey: queryKeys.detectors.list(params),
+    queryKey: queryKeys.detectors.list(params as Record<string, unknown>),
     queryFn: () => detectorService.getList(params),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });

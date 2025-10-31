@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import api from '@/api/axios';
 import { apiConfig } from '@/config/api';
 import { toast } from 'sonner';
+import { AxiosError } from 'axios';
 
 // Define your interfaces
 export interface User {
@@ -111,9 +112,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       toast.success('Login successful');
       router.push('/');
       
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Login failed:', error);
-      const message = error.response?.data?.message || error.message || 'Login failed';
+      let message = 'Login failed';
+      if (error instanceof AxiosError) {
+        message = error.response?.data?.message || error.message || 'Login failed';
+      }
       toast.error(message);
       throw error;
     } finally {
