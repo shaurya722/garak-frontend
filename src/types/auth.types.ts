@@ -27,8 +27,12 @@ export interface LoginResponse {
 }
 
 export interface RegisterCredentials {
-  company: string;
+  name: string;
   email: string;
   password: string;
-  name?: string;
+  address: string;
+  phone: string;
+  website: string;
+  contactPersonName: string;
+  contactPersonEmail: string;
 }

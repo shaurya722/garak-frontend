@@ -1353,9 +1353,5 @@ function NewTestForm() {
 }
 
 export default function NewTestPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <NewTestForm />
-    </Suspense>
-  )
+  return <NewTestForm />
 }
