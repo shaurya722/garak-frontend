@@ -39,4 +39,13 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.probes.all, "detail", id] as const,
     dropdown: () => [...queryKeys.probes.all, "dropdown"] as const,
   },
+
+  // Projects
+  projects: {
+    all: ["projects"] as const,
+    lists: () => [...queryKeys.projects.all, "list"] as const,
+    list: (filters: Record<string, unknown>) => 
+      [...queryKeys.projects.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.projects.all, "detail", id] as const,
+  },
 } as const;

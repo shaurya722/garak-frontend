@@ -28,6 +28,13 @@ export const apiConfig = {
     updateCategory: (id: string) => `${API_BASE_URL}/management/company/category/${id}`,
     deleteCategory: (id: string) => `${API_BASE_URL}/management/company/category/${id}`,
 
+    // Projects
+    projectsList: `${API_BASE_URL}/management/company/project/list`,
+    projectsCreate: `${API_BASE_URL}/management/company/project/create`,
+    getProject: (id: string) => `${API_BASE_URL}/management/company/project/${id}`,
+    updateProject: (id: string) => `${API_BASE_URL}/management/company/project/${id}`,
+    deleteProject: (id: string) => `${API_BASE_URL}/management/company/project/${id}`,
+
     // Probes
     probesList: `${API_BASE_URL}/management/company/probe/list`,
     probesDropdown: `${API_BASE_URL}/management/company/probe/dropdown`,

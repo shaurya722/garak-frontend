@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { DeleteConfirmDialog } from '@/components/dialogs/delete-confirmation-dialog';
 import { Pagination } from "@/components/shared/pagination";
 import MainLayout from '@/components/layout/main-layout';
+import { PageLoader } from "@/components/shared";
 
 export function PolicyList() {
   const router = useRouter();
@@ -51,7 +52,11 @@ export function PolicyList() {
     }
   };
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return (
+        <MainLayout>
+          <PageLoader message="Loading policies..." />
+        </MainLayout>
+      );;
   if (isError) return <div>Error loading policies</div>;
 
   return (
