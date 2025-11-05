@@ -28,6 +28,8 @@ import { apiConfig } from '@/config/api'
 import MainLayout from '@/components/layout/main-layout'
 import api from '@/api/axios'
 
+export const dynamic = 'force-dynamic'
+
 interface RestConfig {
   config_id: string
   config_name: string
