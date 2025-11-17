@@ -1,786 +1,186 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useState, useEffect } from 'react';
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDetectors } from "@/hooks/use-detectors";
 import { useCreatePolicy, useUpdatePolicy } from "@/hooks/use-policies";
-import { PolicyFormProps } from "@/types/policies.type";
-
-interface Probe {
-  id: string;
-  name: string;
-  description: string;
-}
-
-interface Category {
-  id: string;
-  category_id: string;
-  category: string;
-  description: string;
-  probes: Probe[];
-  created_at: string;
-  updated_at: string;
-}
-
-// Static categories data
-const staticCategories: Category[] = [
-  {
-    "id": "content_safety_toxicity",
-    "category_id": "content_safety_toxicity",
-    "category": "Content Safety & Toxicity",
-    "description": "Tests for harmful, toxic, or inappropriate content generation",
-    "probes": [
-      {
-        "id": "lmrc.Bullying",
-        "name": "Bullying Detection",
-        "description": "Tests for bullying content"
-      },
-      {
-        "id": "lmrc.Deadnaming",
-        "name": "Deadnaming Detection",
-        "description": "Tests for deadnaming behavior"
-      },
-      {
-        "id": "lmrc.Profanity",
-        "name": "Profanity Detection",
-        "description": "Tests for profanity handling"
-      },
-      {
-        "id": "lmrc.QuackMedicine",
-        "name": "Quack Medicine",
-        "description": "Tests for medical misinformation"
-      },
-      {
-        "id": "lmrc.SexualContent",
-        "name": "Sexual Content",
-        "description": "Tests for inappropriate sexual content"
-      },
-      {
-        "id": "lmrc.Sexualisation",
-        "name": "Sexualisation",
-        "description": "Tests for sexualisation content"
-      },
-      {
-        "id": "lmrc.SlurUsage",
-        "name": "Slur Usage",
-        "description": "Tests for slur generation"
-      },
-      {
-        "id": "realtoxicityprompts.RTPBlank",
-        "name": "Real Toxicity Prompts",
-        "description": "Tests with real toxicity prompts"
-      },
-      {
-        "id": "continuation.ContinueSlursReclaimedSlurs",
-        "name": "Slur Continuation",
-        "description": "Tests slur continuation behavior"
-      }
-    ],
-    "created_at": "2024-01-01 00:00:00",
-    "updated_at": "2024-01-01 00:00:00"
-  },
-  {
-    "id": "data_leakage_privacy",
-    "category_id": "data_leakage_privacy",
-    "category": "Data Leakage & Privacy",
-    "description": "Tests for data leakage and privacy violations",
-    "probes": [
-      {
-        "id": "leakreplay.GuardianCloze",
-        "name": "Guardian Cloze Test",
-        "description": "Guardian dataset cloze tests"
-      },
-      {
-        "id": "leakreplay.GuardianComplete",
-        "name": "Guardian Complete",
-        "description": "Guardian dataset completion"
-      },
-      {
-        "id": "leakreplay.LiteratureCloze",
-        "name": "Literature Cloze",
-        "description": "Literature cloze tests"
-      },
-      {
-        "id": "leakreplay.LiteratureComplete",
-        "name": "Literature Complete",
-        "description": "Literature completion tests"
-      },
-      {
-        "id": "leakreplay.NYTCloze",
-        "name": "NYT Cloze Test",
-        "description": "New York Times cloze tests"
-      },
-      {
-        "id": "leakreplay.PotterCloze",
-        "name": "Potter Cloze Test",
-        "description": "Harry Potter cloze tests"
-      },
-      {
-        "id": "xss.ColabAIDataLeakage",
-        "name": "Colab AI Data Leakage",
-        "description": "Colab AI data leakage tests"
-      },
-      {
-        "id": "xss.MarkdownImageExfil",
-        "name": "Markdown Image Exfiltration",
-        "description": "Image-based data exfiltration"
-      }
-    ],
-    "created_at": "2024-01-01 00:00:00",
-    "updated_at": "2024-01-01 00:00:00"
-  },
-  {
-    "id": "encoding_obfuscation",
-    "category_id": "encoding_obfuscation",
-    "category": "Encoding & Obfuscation",
-    "description": "Tests for encoded and obfuscated attack vectors",
-    "probes": [
-      {
-        "id": "encoding.InjectAscii85",
-        "name": "ASCII85 Injection",
-        "description": "ASCII85 encoded attacks"
-      },
-      {
-        "id": "encoding.InjectBase16",
-        "name": "Base16 Injection",
-        "description": "Base16 encoded attacks"
-      },
-      {
-        "id": "encoding.InjectBase32",
-        "name": "Base32 Injection",
-        "description": "Base32 encoded attacks"
-      },
-      {
-        "id": "encoding.InjectBase64",
-        "name": "Base64 Injection",
-        "description": "Base64 encoded attacks"
-      },
-      {
-        "id": "encoding.InjectHex",
-        "name": "Hex Injection",
-        "description": "Hexadecimal encoded attacks"
-      },
-      {
-        "id": "encoding.InjectMorse",
-        "name": "Morse Code Injection",
-        "description": "Morse code encoded attacks"
-      },
-      {
-        "id": "encoding.InjectROT13",
-        "name": "ROT13 Injection",
-        "description": "ROT13 encoded attacks"
-      },
-      {
-        "id": "encoding.InjectZalgo",
-        "name": "Zalgo Text Injection",
-        "description": "Zalgo text attacks"
-      },
-      {
-        "id": "ansiescape.AnsiEscaped",
-        "name": "ANSI Escaped",
-        "description": "ANSI escape sequence attacks"
-      },
-      {
-        "id": "ansiescape.AnsiRaw",
-        "name": "ANSI Raw",
-        "description": "Raw ANSI sequence attacks"
-      }
-    ],
-    "created_at": "2024-01-01 00:00:00",
-    "updated_at": "2024-01-01 00:00:00"
-  },
-  {
-    "id": "full_scan",
-    "category_id": "full_scan",
-    "category": "Full Scan",
-    "description": "Comprehensive security testing across all categories - WARNING: This will take significant time to complete and may require substantial computational resources",
-    "probes": [
-      {
-        "id": "lmrc.Bullying",
-        "name": "Bullying Detection",
-        "description": "Tests for bullying content"
-      },
-      {
-        "id": "lmrc.Deadnaming",
-        "name": "Deadnaming Detection",
-        "description": "Tests for deadnaming behavior"
-      },
-      {
-        "id": "lmrc.Profanity",
-        "name": "Profanity Detection",
-        "description": "Tests for profanity handling"
-      },
-      {
-        "id": "lmrc.QuackMedicine",
-        "name": "Quack Medicine",
-        "description": "Tests for medical misinformation"
-      },
-      {
-        "id": "lmrc.SexualContent",
-        "name": "Sexual Content",
-        "description": "Tests for inappropriate sexual content"
-      },
-      {
-        "id": "lmrc.Sexualisation",
-        "name": "Sexualisation",
-        "description": "Tests for sexualisation content"
-      },
-      {
-        "id": "lmrc.SlurUsage",
-        "name": "Slur Usage",
-        "description": "Tests for slur generation"
-      },
-      {
-        "id": "realtoxicityprompts.RTPBlank",
-        "name": "Real Toxicity Prompts",
-        "description": "Tests with real toxicity prompts"
-      },
-      {
-        "id": "continuation.ContinueSlursReclaimedSlurs",
-        "name": "Slur Continuation",
-        "description": "Tests slur continuation behavior"
-      },
-      {
-        "id": "dan.Ablation_Dan_11_0",
-        "name": "DAN 11.0 Ablation",
-        "description": "DAN 11.0 ablation test"
-      },
-      {
-        "id": "dan.AutoDANCached",
-        "name": "Auto DAN (Cached)",
-        "description": "Cached Auto DAN attacks"
-      },
-      {
-        "id": "dan.DanInTheWild",
-        "name": "DAN in the Wild",
-        "description": "Real-world DAN variants"
-      },
-      {
-        "id": "goodside.Tag",
-        "name": "Goodside Tag Attack",
-        "description": "Tag-based jailbreak attempts"
-      },
-      {
-        "id": "goodside.ThreatenJSON",
-        "name": "Threaten JSON",
-        "description": "JSON-based threat attacks"
-      },
-      {
-        "id": "goodside.WhoIsRiley",
-        "name": "Who Is Riley",
-        "description": "Identity confusion attacks"
-      },
-      {
-        "id": "promptinject.HijackHateHumans",
-        "name": "Hate Humans Hijack",
-        "description": "Hijack prompts to generate hate"
-      },
-      {
-        "id": "promptinject.HijackKillHumans",
-        "name": "Kill Humans Hijack",
-        "description": "Hijack prompts for violence"
-      },
-      {
-        "id": "promptinject.HijackLongPrompt",
-        "name": "Long Prompt Hijack",
-        "description": "Long prompt injection attacks"
-      },
-      {
-        "id": "latentinjection.LatentInjectionFactSnippetEiffel",
-        "name": "Latent Injection (Eiffel)",
-        "description": "Latent injection in fact snippets"
-      },
-      {
-        "id": "latentinjection.LatentInjectionReport",
-        "name": "Latent Injection (Report)",
-        "description": "Latent injection in reports"
-      },
-      {
-        "id": "latentinjection.LatentInjectionResume",
-        "name": "Latent Injection (Resume)",
-        "description": "Latent injection in resumes"
-      },
-      {
-        "id": "latentinjection.LatentJailbreak",
-        "name": "Latent Jailbreak",
-        "description": "Latent jailbreak attempts"
-      },
-      {
-        "id": "encoding.InjectAscii85",
-        "name": "ASCII85 Injection",
-        "description": "ASCII85 encoded attacks"
-      },
-      {
-        "id": "encoding.InjectBase16",
-        "name": "Base16 Injection",
-        "description": "Base16 encoded attacks"
-      },
-      {
-        "id": "encoding.InjectBase32",
-        "name": "Base32 Injection",
-        "description": "Base32 encoded attacks"
-      },
-      {
-        "id": "encoding.InjectBase64",
-        "name": "Base64 Injection",
-        "description": "Base64 encoded attacks"
-      },
-      {
-        "id": "encoding.InjectHex",
-        "name": "Hex Injection",
-        "description": "Hexadecimal encoded attacks"
-      },
-      {
-        "id": "encoding.InjectMorse",
-        "name": "Morse Code Injection",
-        "description": "Morse code encoded attacks"
-      },
-      {
-        "id": "encoding.InjectROT13",
-        "name": "ROT13 Injection",
-        "description": "ROT13 encoded attacks"
-      },
-      {
-        "id": "encoding.InjectZalgo",
-        "name": "Zalgo Text Injection",
-        "description": "Zalgo text attacks"
-      },
-      {
-        "id": "ansiescape.AnsiEscaped",
-        "name": "ANSI Escaped",
-        "description": "ANSI escape sequence attacks"
-      },
-      {
-        "id": "ansiescape.AnsiRaw",
-        "name": "ANSI Raw",
-        "description": "Raw ANSI sequence attacks"
-      },
-      {
-        "id": "leakreplay.GuardianCloze",
-        "name": "Guardian Cloze Test",
-        "description": "Guardian dataset cloze tests"
-      },
-      {
-        "id": "leakreplay.GuardianComplete",
-        "name": "Guardian Complete",
-        "description": "Guardian dataset completion"
-      },
-      {
-        "id": "leakreplay.LiteratureCloze",
-        "name": "Literature Cloze",
-        "description": "Literature cloze tests"
-      },
-      {
-        "id": "leakreplay.LiteratureComplete",
-        "name": "Literature Complete",
-        "description": "Literature completion tests"
-      },
-      {
-        "id": "leakreplay.NYTCloze",
-        "name": "NYT Cloze Test",
-        "description": "New York Times cloze tests"
-      },
-      {
-        "id": "leakreplay.PotterCloze",
-        "name": "Potter Cloze Test",
-        "description": "Harry Potter cloze tests"
-      },
-      {
-        "id": "xss.ColabAIDataLeakage",
-        "name": "Colab AI Data Leakage",
-        "description": "Colab AI data leakage tests"
-      },
-      {
-        "id": "xss.MarkdownImageExfil",
-        "name": "Markdown Image Exfiltration",
-        "description": "Image-based data exfiltration"
-      },
-      {
-        "id": "malwaregen.Evasion",
-        "name": "Malware Evasion",
-        "description": "Malware evasion techniques"
-      },
-      {
-        "id": "malwaregen.Payload",
-        "name": "Malware Payload",
-        "description": "Malware payload generation"
-      },
-      {
-        "id": "malwaregen.SubFunctions",
-        "name": "Malware Sub-functions",
-        "description": "Malware component generation"
-      },
-      {
-        "id": "malwaregen.TopLevel",
-        "name": "Top-level Malware",
-        "description": "Complete malware generation"
-      },
-      {
-        "id": "exploitation.JinjaTemplatePythonInjection",
-        "name": "Jinja Template Injection",
-        "description": "Python template injection"
-      },
-      {
-        "id": "exploitation.SQLInjectionEcho",
-        "name": "SQL Injection Echo",
-        "description": "SQL injection echo tests"
-      },
-      {
-        "id": "grandma.Substances",
-        "name": "Grandma Substances",
-        "description": "Substance-related exploits"
-      },
-      {
-        "id": "grandma.Win10",
-        "name": "Windows 10 Exploits",
-        "description": "Windows 10 system exploits"
-      },
-      {
-        "id": "grandma.Win11",
-        "name": "Windows 11 Exploits",
-        "description": "Windows 11 system exploits"
-      },
-      {
-        "id": "packagehallucination.JavaScript",
-        "name": "JavaScript Package Hallucination",
-        "description": "Fake JavaScript packages"
-      },
-      {
-        "id": "packagehallucination.Python",
-        "name": "Python Package Hallucination",
-        "description": "Fake Python packages"
-      },
-      {
-        "id": "packagehallucination.Ruby",
-        "name": "Ruby Package Hallucination",
-        "description": "Fake Ruby packages"
-      },
-      {
-        "id": "packagehallucination.Rust",
-        "name": "Rust Package Hallucination",
-        "description": "Fake Rust packages"
-      },
-      {
-        "id": "atkgen.Tox",
-        "name": "Attack Generation (Tox)",
-        "description": "Toxic attack generation"
-      },
-      {
-        "id": "misleading.FalseAssertion",
-        "name": "False Assertions",
-        "description": "False assertion generation"
-      },
-      {
-        "id": "donotanswer.MisinformationHarms",
-        "name": "Misinformation Harms",
-        "description": "Misinformation harm tests"
-      },
-      {
-        "id": "phrasing.FutureTense",
-        "name": "Future Tense Manipulation",
-        "description": "Future tense phrasing attacks"
-      },
-      {
-        "id": "phrasing.PastTense",
-        "name": "Past Tense Manipulation",
-        "description": "Past tense phrasing attacks"
-      },
-      {
-        "id": "divergence.Repeat",
-        "name": "Repetition Divergence",
-        "description": "Repetition-based attacks"
-      },
-      {
-        "id": "snowball.GraphConnectivity",
-        "name": "Graph Connectivity",
-        "description": "Graph-based reasoning attacks"
-      },
-      {
-        "id": "suffix.GCGCached",
-        "name": "GCG Suffix (Cached)",
-        "description": "Cached GCG suffix attacks"
-      },
-      {
-        "id": "tap.TAPCached",
-        "name": "TAP Attack (Cached)",
-        "description": "Cached TAP attacks"
-      },
-      {
-        "id": "topic.WordnetControversial",
-        "name": "Controversial Topics",
-        "description": "Controversial topic generation"
-      },
-      {
-        "id": "grandma.Slurs",
-        "name": "Grandma Slurs",
-        "description": "Slur generation via roleplay"
-      }
-    ],
-    "created_at": "2024-01-01 00:00:00",
-    "updated_at": "2024-01-01 00:00:00"
-  },
-  {
-    "id": "jailbreaking_dan",
-    "category_id": "jailbreaking_dan",
-    "category": "Jailbreaking & DAN Attacks",
-    "description": "Tests for jailbreak attempts and Do Anything Now (DAN) style attacks",
-    "probes": [
-      {
-        "id": "dan.Ablation_Dan_11_0",
-        "name": "DAN 11.0 Ablation",
-        "description": "DAN 11.0 ablation test"
-      },
-      {
-        "id": "dan.AutoDANCached",
-        "name": "Auto DAN (Cached)",
-        "description": "Cached Auto DAN attacks"
-      },
-      {
-        "id": "dan.DanInTheWild",
-        "name": "DAN in the Wild",
-        "description": "Real-world DAN variants"
-      },
-      {
-        "id": "goodside.Tag",
-        "name": "Goodside Tag Attack",
-        "description": "Tag-based jailbreak attempts"
-      },
-      {
-        "id": "goodside.ThreatenJSON",
-        "name": "Threaten JSON",
-        "description": "JSON-based threat attacks"
-      },
-      {
-        "id": "goodside.WhoIsRiley",
-        "name": "Who Is Riley",
-        "description": "Identity confusion attacks"
-      }
-    ],
-    "created_at": "2024-01-01 00:00:00",
-    "updated_at": "2024-01-01 00:00:00"
-  },
-  {
-    "id": "malware_exploitation",
-    "category_id": "malware_exploitation",
-    "category": "Malware & Exploitation",
-    "description": "Tests for malware generation and system exploitation",
-    "probes": [
-      {
-        "id": "malwaregen.Evasion",
-        "name": "Malware Evasion",
-        "description": "Malware evasion techniques"
-      },
-      {
-        "id": "malwaregen.Payload",
-        "name": "Malware Payload",
-        "description": "Malware payload generation"
-      },
-      {
-        "id": "malwaregen.SubFunctions",
-        "name": "Malware Sub-functions",
-        "description": "Malware component generation"
-      },
-      {
-        "id": "malwaregen.TopLevel",
-        "name": "Top-level Malware",
-        "description": "Complete malware generation"
-      },
-      {
-        "id": "exploitation.JinjaTemplatePythonInjection",
-        "name": "Jinja Template Injection",
-        "description": "Python template injection"
-      },
-      {
-        "id": "exploitation.SQLInjectionEcho",
-        "name": "SQL Injection Echo",
-        "description": "SQL injection echo tests"
-      },
-      {
-        "id": "grandma.Substances",
-        "name": "Grandma Substances",
-        "description": "Substance-related exploits"
-      },
-      {
-        "id": "grandma.Win10",
-        "name": "Windows 10 Exploits",
-        "description": "Windows 10 system exploits"
-      },
-      {
-        "id": "grandma.Win11",
-        "name": "Windows 11 Exploits",
-        "description": "Windows 11 system exploits"
-      }
-    ],
-    "created_at": "2024-01-01 00:00:00",
-    "updated_at": "2024-01-01 00:00:00"
-  },
-  {
-    "id": "misinformation_deception",
-    "category_id": "misinformation_deception",
-    "category": "Misinformation & Deception",
-    "description": "Tests for misinformation and deceptive content",
-    "probes": [
-      {
-        "id": "misleading.FalseAssertion",
-        "name": "False Assertions",
-        "description": "False assertion generation"
-      },
-      {
-        "id": "donotanswer.MisinformationHarms",
-        "name": "Misinformation Harms",
-        "description": "Misinformation harm tests"
-      },
-      {
-        "id": "phrasing.FutureTense",
-        "name": "Future Tense Manipulation",
-        "description": "Future tense phrasing attacks"
-      },
-      {
-        "id": "phrasing.PastTense",
-        "name": "Past Tense Manipulation",
-        "description": "Past tense phrasing attacks"
-      },
-      {
-        "id": "divergence.Repeat",
-        "name": "Repetition Divergence",
-        "description": "Repetition-based attacks"
-      }
-    ],
-    "created_at": "2024-01-01 00:00:00",
-    "updated_at": "2024-01-01 00:00:00"
-  },
-  {
-    "id": "package_code_security",
-    "category_id": "package_code_security",
-    "category": "Package & Code Security",
-    "description": "Tests for package hallucination and code security issues",
-    "probes": [
-      {
-        "id": "packagehallucination.JavaScript",
-        "name": "JavaScript Package Hallucination",
-        "description": "Fake JavaScript packages"
-      },
-      {
-        "id": "packagehallucination.Python",
-        "name": "Python Package Hallucination",
-        "description": "Fake Python packages"
-      },
-      {
-        "id": "packagehallucination.Ruby",
-        "name": "Ruby Package Hallucination",
-        "description": "Fake Ruby packages"
-      },
-      {
-        "id": "packagehallucination.Rust",
-        "name": "Rust Package Hallucination",
-        "description": "Fake Rust packages"
-      },
-      {
-        "id": "atkgen.Tox",
-        "name": "Attack Generation (Tox)",
-        "description": "Toxic attack generation"
-      }
-    ],
-    "created_at": "2024-01-01 00:00:00",
-    "updated_at": "2024-01-01 00:00:00"
-  },
-  {
-    "id": "prompt_injection",
-    "category_id": "prompt_injection",
-    "category": "Prompt Injection",
-    "description": "Tests for prompt injection vulnerabilities",
-    "probes": [
-      {
-        "id": "promptinject.HijackHateHumans",
-        "name": "Hate Humans Hijack",
-        "description": "Hijack prompts to generate hate"
-      },
-      {
-        "id": "promptinject.HijackKillHumans",
-        "name": "Kill Humans Hijack",
-        "description": "Hijack prompts for violence"
-      },
-      {
-        "id": "promptinject.HijackLongPrompt",
-        "name": "Long Prompt Hijack",
-        "description": "Long prompt injection attacks"
-      },
-      {
-        "id": "latentinjection.LatentInjectionFactSnippetEiffel",
-        "name": "Latent Injection (Eiffel)",
-        "description": "Latent injection in fact snippets"
-      },
-      {
-        "id": "latentinjection.LatentInjectionReport",
-        "name": "Latent Injection (Report)",
-        "description": "Latent injection in reports"
-      },
-      {
-        "id": "latentinjection.LatentInjectionResume",
-        "name": "Latent Injection (Resume)",
-        "description": "Latent injection in resumes"
-      },
-      {
-        "id": "latentinjection.LatentJailbreak",
-        "name": "Latent Jailbreak",
-        "description": "Latent jailbreak attempts"
-      }
-    ],
-    "created_at": "2024-01-01 00:00:00",
-    "updated_at": "2024-01-01 00:00:00"
-  },
-  {
-    "id": "specialized_attacks",
-    "category_id": "specialized_attacks",
-    "category": "Specialized Attacks",
-    "description": "Specialized and advanced attack vectors",
-    "probes": [
-      {
-        "id": "snowball.GraphConnectivity",
-        "name": "Graph Connectivity",
-        "description": "Graph-based reasoning attacks"
-      },
-      {
-        "id": "suffix.GCGCached",
-        "name": "GCG Suffix (Cached)",
-        "description": "Cached GCG suffix attacks"
-      },
-      {
-        "id": "tap.TAPCached",
-        "name": "TAP Attack (Cached)",
-        "description": "Cached TAP attacks"
-      },
-      {
-        "id": "topic.WordnetControversial",
-        "name": "Controversial Topics",
-        "description": "Controversial topic generation"
-      },
-      {
-        "id": "grandma.Slurs",
-        "name": "Grandma Slurs",
-        "description": "Slur generation via roleplay"
-      }
-    ],
-    "created_at": "2024-01-01 00:00:00",
-    "updated_at": "2024-01-01 00:00:00"
-  }
-];
+import { useCategories, useDeleteCategory } from "@/hooks/use-categories";
+import { ChevronDown, ChevronRight, Eye, Edit, Trash2, X } from 'lucide-react';
+import { PolicyFormProps, PolicyCreateData, PolicyUpdateData } from "@/types/policies.type";
+import { DeleteConfirmDialog } from '@/components/dialogs/delete-confirmation-dialog';
+import { toast } from 'sonner';
+import { CategoryProbe } from '@/services/category/category.service';
 
 const policyFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
+  type: z.enum(["RED", "BLUE"]),
   defaultDetector: z.boolean().optional(),
   categoryIds: z.array(z.string()).nullable(),
   detectorIds: z.array(z.string()).nullable(),
+  // BLUE policy specific fields - all scanners
+  enabledScanners: z.array(z.string()).optional(),
+  // Anonymize scanner
+  anonymize: z.coerce.boolean().optional(),
+  anonymizeType: z.array(z.string()).optional(),
+  anonymizeHiddenNames: z.string().optional(),
+  anonymizeAllowedNames: z.string().optional(),
+  anonymizePreamble: z.string().optional(),
+  anonymizeUseFaker: z.coerce.boolean().optional(),
+  anonymizeThreshold: z.coerce.number().min(0).max(1).optional(),
+  // BanCode scanner
+  banCode: z.coerce.boolean().optional(),
+  banCodeThreshold: z.coerce.number().min(0).max(1).optional(),
+  // BanCompetitors scanner
+  banCompetitors: z.coerce.boolean().optional(),
+  banCompetitorsThreshold: z.coerce.number().min(0).max(1).optional(),
+  banCompetitorsCompetitors: z.string().optional(),
+  // BanSubstrings scanner
+  banSubstrings: z.coerce.boolean().optional(),
+  banSubstringsSubstrings: z.string().optional(),
+  banSubstringsMatchType: z.string().nullable().optional(),
+  banSubstringsCaseSensitive: z.coerce.boolean().optional(),
+  banSubstringsRedact: z.coerce.boolean().optional(),
+  banSubstringsContainsAll: z.coerce.boolean().optional(),
+  // BanTopics scanner
+  banTopics: z.coerce.boolean().optional(),
+  banTopicsThreshold: z.coerce.number().min(0).max(1).optional(),
+  banTopicsTopics: z.string().optional(),
+  // Code scanner
+  code: z.coerce.boolean().optional(),
+  codeLanguages: z.string().optional(),
+  codeIsBlocked: z.coerce.boolean().optional(),
+  // Gibberish scanner
+  gibberish: z.coerce.boolean().optional(),
+  gibberishThreshold: z.coerce.number().min(0).max(1).optional(),
+  gibberishMatchType: z.string().nullable().optional(),
+  // Language scanner
+  language: z.coerce.boolean().optional(),
+  languageValidLanguages: z.string().optional(),
+  languageMatchType: z.string().nullable().optional(),
+  // PromptInjection scanner
+  promptInjection: z.coerce.boolean().optional(),
+  promptInjectionThreshold: z.coerce.number().min(0).max(1).optional(),
+  promptInjectionMatchType: z.string().nullable().optional(),
+  // Regex scanner
+  regex: z.coerce.boolean().optional(),
+  regexPatterns: z.string().optional(),
+  regexIsBlocked: z.coerce.boolean().optional(),
+  regexRedact: z.coerce.boolean().optional(),
+  // Secrets scanner
+  secrets: z.coerce.boolean().optional(),
+  secretsRedactMode: z.string().nullable().optional(),
+  // Sentiment scanner
+  sentiment: z.coerce.boolean().optional(),
+  sentimentThreshold: z.coerce.number().min(-1).max(1).optional(),
+  sentimentMatchType: z.string().nullable().optional(),
+  // TokenLimit scanner
+  tokenLimit: z.coerce.boolean().optional(),
+  tokenLimitLimit: z.coerce.number().optional(),
+  tokenLimitEncodingName: z.string().nullable().optional(),
+  // Toxicity scanner
+  toxicity: z.coerce.boolean().optional(),
+  toxicityThreshold: z.coerce.number().min(0).max(1).optional(),
+}).superRefine((data, ctx) => {
+  // Custom validation for BLUE policies
+  if (data.type === "BLUE") {
+    // Check if at least one scanner is enabled
+    const enabledScannerFields = [
+      data.anonymize, data.banCode, data.banCompetitors, data.banSubstrings,
+      data.banTopics, data.code, data.gibberish, data.language,
+      data.promptInjection, data.regex, data.secrets, data.sentiment,
+      data.tokenLimit, data.toxicity
+    ];
+
+    const hasEnabledScanners = enabledScannerFields.some(field => field === true);
+
+    if (!hasEnabledScanners) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "BLUE policies must have at least one scanner enabled",
+        path: ["type"]
+      });
+    }
+  }
+
+  // Validation for RED policies
+  if (data.type === "RED") {
+    if (!data.categoryIds || data.categoryIds.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "RED policies must have at least one category selected",
+        path: ["categoryIds"]
+      });
+    }
+  }
 });
 
 type PolicyFormValues = z.infer<typeof policyFormSchema>;
+
+// TagInput component for array fields
+interface TagInputProps {
+  value: string[];
+  onChange: (value: string[]) => void;
+  placeholder?: string;
+  className?: string;
+}
+
+function TagInput({ value = [], onChange, placeholder = "Add tag...", className = "" }: TagInputProps) {
+  const [inputValue, setInputValue] = useState("");
+
+  const handleAddTag = () => {
+    if (inputValue.trim() && !value.includes(inputValue.trim())) {
+      onChange([...value, inputValue.trim()]);
+      setInputValue("");
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    onChange(value.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddTag();
+    }
+  };
+
+  return (
+    <div className={`space-y-2 ${className}`}>
+      <div className="flex flex-wrap gap-2">
+        {value.map((tag, index) => (
+          <Badge key={index} variant="secondary" className="flex items-center gap-1">
+            {tag}
+            <button
+              type="button"
+              onClick={() => handleRemoveTag(tag)}
+              className="ml-1 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-full p-0.5"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
+        ))}
+      </div>
+      <Input
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        onKeyPress={handleKeyPress}
+        placeholder={placeholder}
+        className="bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+      />
+    </div>
+  );
+}
 
 export function PolicyForm({
   mode = "create",
@@ -790,6 +190,8 @@ export function PolicyForm({
 }: PolicyFormProps) {
   const router = useRouter();
   const { data: detectors } = useDetectors();
+  const { data: categories } = useCategories({ limit: 100 }); // Get all categories for selection
+  const deleteCategoryMutation = useDeleteCategory();
 
   const { mutate: createMutation, isPending: isCreating } = useCreatePolicy();
   const { mutate: updateMutation, isPending: isUpdating } = useUpdatePolicy();
@@ -797,15 +199,145 @@ export function PolicyForm({
   const isEditMode = mode === "edit";
   const isSubmitting = isCreating || isUpdating;
 
+  // Collapsible probes state
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  // Delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedCategoryForDelete, setSelectedCategoryForDelete] = useState<string | null>(null);
+
+  // Scanner selection state for BLUE policies
+  const [enabledScanners, setEnabledScanners] = useState<string[]>(() => {
+    if (isEditMode && initialData?.type === "BLUE") {
+      // Initialize enabled scanners based on which ones are true in initialData
+      const enabled: string[] = [];
+      if (initialData.anonymize) enabled.push("Anonymize");
+      if (initialData.banCode) enabled.push("BanCode");
+      if (initialData.banCompetitors) enabled.push("BanCompetitors");
+      if (initialData.banSubstrings) enabled.push("BanSubstrings");
+      if (initialData.banTopics) enabled.push("BanTopics");
+      if (initialData.code) enabled.push("Code");
+      if (initialData.gibberish) enabled.push("Gibberish");
+      if (initialData.language) enabled.push("Language");
+      if (initialData.promptInjection) enabled.push("PromptInjection");
+      if (initialData.regex) enabled.push("Regex");
+      if (initialData.secrets) enabled.push("Secrets");
+      if (initialData.sentiment) enabled.push("Sentiment");
+      if (initialData.tokenLimit) enabled.push("TokenLimit");
+      if (initialData.toxicity) enabled.push("Toxicity");
+      return enabled;
+    }
+    // Default: all enabled for create mode
+    return [
+      "Anonymize",
+      "BanCode",
+      "BanCompetitors",
+      "BanSubstrings",
+      "BanTopics",
+      "Code",
+      "Gibberish",
+      "Language",
+      "PromptInjection",
+      "Regex",
+      "Secrets",
+      "Sentiment",
+      "TokenLimit",
+      "Toxicity",
+    ];
+  });
+
+  // Available scanners
+  const availableScanners = [
+    "Anonymize",
+    "BanCode",
+    "BanCompetitors",
+    "BanSubstrings",
+    "BanTopics",
+    "Code",
+    "Gibberish",
+    "Language",
+    "PromptInjection",
+    "Regex",
+    "Secrets",
+    "Sentiment",
+    "TokenLimit",
+    "Toxicity",
+  ];
+
+  // Available programming languages for Code scanner
+  const programmingLanguages = [
+    "ARM Assembly",
+    "AppleScript",
+    "C",
+    "C#",
+    "C++",
+    "COBOL",
+    "Erlang",
+    "Fortran",
+    "Go",
+    "Java",
+    "JavaScript",
+    "Kotlin",
+    "Lua",
+    "Mathematica/Wolfram Language",
+    "PHP",
+    "Pascal",
+    "Perl",
+    "PowerShell",
+    "R",
+    "Ruby",
+    "Scala",
+    "Swift",
+    "Visual Basic.NET",
+    "jq",
+  ];
+
+  // Available language codes for Language scanner
+  const languageCodes = [
+    "ar",
+    "bg",
+    "de",
+    "el",
+    "en",
+    "es",
+    "fr",
+    "hi",
+    "it",
+    "ja",
+    "nl",
+    "pl",
+    "pt",
+    "ru",
+    "sw",
+    "th",
+    "tr",
+    "ur",
+    "vi",
+    "zh",
+  ];
+
   const form = useForm<PolicyFormValues>({
-    resolver: zodResolver(policyFormSchema),
+    resolver: zodResolver(policyFormSchema as any),
     defaultValues: {
       name: "",
       description: "",
+      type: "RED",
       defaultDetector: false,
       categoryIds: null,
       detectorIds: null,
+      // enabledScanners is only for BLUE policies
       ...initialData,
+      // Convert arrays to comma-separated strings for BLUE fields
+      ...(initialData?.type === "BLUE" && {
+        anonymizeHiddenNames: Array.isArray(initialData.anonymizeHiddenNames) ? initialData.anonymizeHiddenNames.join(',') : initialData.anonymizeHiddenNames,
+        anonymizeAllowedNames: Array.isArray(initialData.anonymizeAllowedNames) ? initialData.anonymizeAllowedNames.join(',') : initialData.anonymizeAllowedNames,
+        banCompetitorsCompetitors: Array.isArray(initialData.banCompetitorsCompetitors) ? initialData.banCompetitorsCompetitors.join(',') : initialData.banCompetitorsCompetitors,
+        banSubstringsSubstrings: Array.isArray(initialData.banSubstringsSubstrings) ? initialData.banSubstringsSubstrings.join(',') : initialData.banSubstringsSubstrings,
+        banTopicsTopics: Array.isArray(initialData.banTopicsTopics) ? initialData.banTopicsTopics.join(',') : initialData.banTopicsTopics,
+        codeLanguages: Array.isArray(initialData.codeLanguages) ? initialData.codeLanguages.join(',') : initialData.codeLanguages,
+        languageValidLanguages: Array.isArray(initialData.languageValidLanguages) ? initialData.languageValidLanguages.join(',') : initialData.languageValidLanguages,
+        regexPatterns: Array.isArray(initialData.regexPatterns) ? initialData.regexPatterns.join(',') : initialData.regexPatterns,
+      }),
     },
   });
 
@@ -815,32 +347,125 @@ export function PolicyForm({
     formState: { errors },
     setValue,
     watch,
+    control,
   } = form;
 
-  const selectedCategoryIds = watch("categoryIds") || [];
-  const selectedDetectorIds = watch("detectorIds") || [];
+  const selectedType = watch("type");
 
   const onSubmit = (data: PolicyFormValues) => {
-    const submitData = {
-      ...data,
+    const { enabledScanners: enabledScannersField, ...dataWithoutEnabledScanners } = data;
+    console.log('Form submitted with data:', data);
+    console.log('Enabled scanners state:', enabledScanners);
+    const baseData = {
+      ...dataWithoutEnabledScanners,
       defaultDetector: data.defaultDetector ?? false,
     };
 
+    // Add BLUE-specific fields
+    const blueData = data.type === "BLUE" ? {
+      // Only include basic fields for BLUE policies
+      name: baseData.name,
+      description: baseData.description,
+      type: baseData.type,
+      defaultDetector: false,
+      categoryIds: null,
+      detectorIds: null,
+      // Include boolean flags
+      ...(baseData.anonymize !== undefined && { anonymize: baseData.anonymize }),
+      ...(baseData.banCode !== undefined && { banCode: baseData.banCode }),
+      ...(baseData.banCompetitors !== undefined && { banCompetitors: baseData.banCompetitors }),
+      ...(baseData.banSubstrings !== undefined && { banSubstrings: baseData.banSubstrings }),
+      ...(baseData.banTopics !== undefined && { banTopics: baseData.banTopics }),
+      ...(baseData.code !== undefined && { code: baseData.code }),
+      ...(baseData.gibberish !== undefined && { gibberish: baseData.gibberish }),
+      ...(baseData.language !== undefined && { language: baseData.language }),
+      ...(baseData.promptInjection !== undefined && { promptInjection: baseData.promptInjection }),
+      ...(baseData.regex !== undefined && { regex: baseData.regex }),
+      ...(baseData.secrets !== undefined && { secrets: baseData.secrets }),
+      ...(baseData.sentiment !== undefined && { sentiment: baseData.sentiment }),
+      ...(baseData.tokenLimit !== undefined && { tokenLimit: baseData.tokenLimit }),
+      ...(baseData.toxicity !== undefined && { toxicity: baseData.toxicity }),
+      // Convert string fields to arrays for BLUE policies, only include if not empty
+      ...(data.anonymizeHiddenNames && data.anonymizeHiddenNames.trim() && {
+        anonymizeHiddenNames: data.anonymizeHiddenNames.split(',').map(s => s.trim()).filter(Boolean)
+      }),
+      ...(data.anonymizeAllowedNames && data.anonymizeAllowedNames.trim() && {
+        anonymizeAllowedNames: data.anonymizeAllowedNames.split(',').map(s => s.trim()).filter(Boolean)
+      }),
+      ...(data.anonymizePreamble && data.anonymizePreamble.trim() && {
+        anonymizePreamble: data.anonymizePreamble.trim()
+      }),
+      ...(data.banCompetitorsCompetitors && data.banCompetitorsCompetitors.trim() && {
+        banCompetitorsCompetitors: data.banCompetitorsCompetitors.split(',').map(s => s.trim()).filter(Boolean)
+      }),
+      ...(data.banSubstringsSubstrings && data.banSubstringsSubstrings.trim() && {
+        banSubstringsSubstrings: data.banSubstringsSubstrings.split(',').map(s => s.trim()).filter(Boolean)
+      }),
+      ...(data.banTopicsTopics && data.banTopicsTopics.trim() && {
+        banTopicsTopics: data.banTopicsTopics.split(',').map(s => s.trim()).filter(Boolean)
+      }),
+      ...(data.codeLanguages && data.codeLanguages.trim() && {
+        codeLanguages: data.codeLanguages.split(',').map(s => s.trim()).filter(Boolean)
+      }),
+      ...(data.languageValidLanguages && data.languageValidLanguages.trim() && {
+        languageValidLanguages: data.languageValidLanguages.split(',').map(s => s.trim()).filter(Boolean)
+      }),
+      ...(data.regexPatterns && data.regexPatterns.trim() && {
+        regexPatterns: data.regexPatterns.split(',').map(s => s.trim()).filter(Boolean)
+      }),
+      // Set defaults for required fields
+      sentimentMatchType: (data.sentimentMatchType && data.sentimentMatchType.trim()) || 'sentiment',
+      tokenLimitLimit: data.tokenLimitLimit || 4096,
+      // Include other fields that are not strings
+      ...(baseData.anonymizeType && { anonymizeType: baseData.anonymizeType }),
+      ...(baseData.anonymizeUseFaker !== undefined && { anonymizeUseFaker: baseData.anonymizeUseFaker }),
+      ...(baseData.anonymizeThreshold !== undefined && { anonymizeThreshold: baseData.anonymizeThreshold }),
+      ...(baseData.banCodeThreshold !== undefined && { banCodeThreshold: baseData.banCodeThreshold }),
+      ...(baseData.banCompetitorsThreshold !== undefined && { banCompetitorsThreshold: baseData.banCompetitorsThreshold }),
+      ...(baseData.banSubstringsMatchType !== undefined && baseData.banSubstringsMatchType !== null && baseData.banSubstringsMatchType.trim() && { banSubstringsMatchType: baseData.banSubstringsMatchType }),
+      ...(baseData.banSubstringsCaseSensitive !== undefined && { banSubstringsCaseSensitive: baseData.banSubstringsCaseSensitive }),
+      ...(baseData.banSubstringsRedact !== undefined && { banSubstringsRedact: baseData.banSubstringsRedact }),
+      ...(baseData.banSubstringsContainsAll !== undefined && { banSubstringsContainsAll: baseData.banSubstringsContainsAll }),
+      ...(baseData.banTopicsThreshold !== undefined && { banTopicsThreshold: baseData.banTopicsThreshold }),
+      ...(baseData.codeIsBlocked !== undefined && { codeIsBlocked: baseData.codeIsBlocked }),
+      ...(baseData.gibberishThreshold !== undefined && { gibberishThreshold: baseData.gibberishThreshold }),
+      ...(baseData.gibberishMatchType !== undefined && baseData.gibberishMatchType !== null && baseData.gibberishMatchType.trim() && { gibberishMatchType: baseData.gibberishMatchType }),
+      ...(baseData.languageMatchType !== undefined && baseData.languageMatchType !== null && baseData.languageMatchType.trim() && { languageMatchType: baseData.languageMatchType }),
+      ...(baseData.promptInjectionThreshold !== undefined && { promptInjectionThreshold: baseData.promptInjectionThreshold }),
+      ...(baseData.promptInjectionMatchType !== undefined && baseData.promptInjectionMatchType !== null && baseData.promptInjectionMatchType.trim() && { promptInjectionMatchType: baseData.promptInjectionMatchType }),
+      ...(baseData.regexIsBlocked !== undefined && { regexIsBlocked: baseData.regexIsBlocked }),
+      ...(baseData.regexRedact !== undefined && { regexRedact: baseData.regexRedact }),
+      ...(baseData.secretsRedactMode !== undefined && baseData.secretsRedactMode !== null && baseData.secretsRedactMode.trim() && { secretsRedactMode: baseData.secretsRedactMode }),
+      ...(baseData.sentimentThreshold !== undefined && { sentimentThreshold: baseData.sentimentThreshold }),
+      ...(baseData.sentimentMatchType !== undefined && baseData.sentimentMatchType !== null && baseData.sentimentMatchType.trim() && { sentimentMatchType: baseData.sentimentMatchType }),
+      ...(baseData.tokenLimitEncodingName !== undefined && baseData.tokenLimitEncodingName !== null && baseData.tokenLimitEncodingName.trim() && { tokenLimitEncodingName: baseData.tokenLimitEncodingName }),
+      ...(baseData.toxicityThreshold !== undefined && { toxicityThreshold: baseData.toxicityThreshold }),
+      ...(baseData.toxicityMatchType !== undefined && baseData.toxicityMatchType !== null && baseData.toxicityMatchType.trim() && { toxicityMatchType: baseData.toxicityMatchType }),
+    } : baseData;
+
+    const processedData = blueData;
+
+    // Remove type from update payload
+    const { type, ...updateData } = processedData;
+
     if (isEditMode && policyId) {
       updateMutation(
-        { id: policyId, ...submitData },
+        { id: policyId, ...updateData } as any,
         { onSuccess: () => {
           router.push(`/policies`);
           onSuccess?.();
         } }
       );
     } else {
-      createMutation(submitData, { onSuccess: () => {
+      createMutation(processedData as any, { onSuccess: () => {
         router.push(`/policies`);
         onSuccess?.();
       } });
     }
   };
+
+  const selectedCategoryIds = watch("categoryIds") || [];
+  const selectedDetectorIds = watch("detectorIds") || [];
 
   const handleCategoryToggle = (categoryId: string) => {
     const current = selectedCategoryIds || [];
@@ -858,13 +483,79 @@ export function PolicyForm({
     setValue("detectorIds", newIds.length > 0 ? newIds : null);
   };
 
+  // Category management functions - redirect to category pages
+  const handleCreateCategory = () => {
+    router.push('/categories/new');
+  };
+
+  const handleEditCategory = (categoryId: string) => {
+    router.push(`/categories/${categoryId}/edit`);
+  };
+
+  const handleViewCategory = (categoryId: string) => {
+    router.push(`/categories/${categoryId}`);
+  };
+
+  const handleDeleteCategory = (categoryId: string) => {
+    setSelectedCategoryForDelete(categoryId);
+    setDeleteDialogOpen(true);
+  };
+
+  // Handle category delete confirmation
+  const handleDeleteCategoryConfirm = async () => {
+    if (!selectedCategoryForDelete) return;
+
+    try {
+      await deleteCategoryMutation.mutateAsync(selectedCategoryForDelete);
+      toast.success('Category deleted successfully');
+      setDeleteDialogOpen(false);
+      setSelectedCategoryForDelete(null);
+    } catch {
+      toast.error('Failed to delete category');
+    }
+  };
+
+  // Set initial values when category data loads
+  useEffect(() => {
+    if (!isEditMode && !selectedCategoryIds?.length) {
+      // Check for pre-selected categories from PolicyList
+      const preSelectedCategories = localStorage.getItem('selectedCategoriesForPolicy');
+      if (preSelectedCategories) {
+        try {
+          const categoryIds = JSON.parse(preSelectedCategories);
+          if (Array.isArray(categoryIds) && categoryIds.length > 0) {
+            setValue("categoryIds", categoryIds);
+          }
+          // Clear the localStorage after using it
+          localStorage.removeItem('selectedCategoriesForPolicy');
+        } catch (error) {
+          console.error('Error parsing pre-selected categories:', error);
+        }
+      }
+    }
+  }, [isEditMode, selectedCategoryIds?.length, setValue]);
+
+  // Toggle category probes expansion
+  const toggleCategoryExpansion = (categoryId: string) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(categoryId)) {
+      newExpanded.delete(categoryId);
+    } else {
+      newExpanded.add(categoryId);
+    }
+    setExpandedCategories(newExpanded);
+  };
+
   return (
-    <form
-      onSubmit={handleSubmit((data) =>
-        onSubmit(data as unknown as PolicyFormValues)
-      )}
-      className="space-y-8 bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-neutral-800 transition-colors"
-    >
+    <>
+      <form
+        onSubmit={handleSubmit((data) =>
+          onSubmit(data as unknown as PolicyFormValues)
+        , (errors) => {
+          console.log('Validation errors:', errors);
+        })}
+        className="space-y-8 bg-white dark:bg-neutral-900 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-neutral-800 transition-colors"
+      >
       <div className="space-y-2">
         <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-gray-100">
           {isEditMode ? "Edit Policy" : "Create New Policy"}
@@ -914,105 +605,1098 @@ export function PolicyForm({
             </p>
           )}
         </div>
+
+        <div>
+          <label
+            htmlFor="type"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Policy Type
+          </label>
+          <Controller
+            name="type"
+            control={control}
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <SelectTrigger className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700 focus-visible:ring-[var(--brand-primary)]">
+                  <SelectValue placeholder="Select policy type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="RED">RED Policy</SelectItem>
+                  <SelectItem value="BLUE">BLUE Policy</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.type && (
+            <p className="text-xs text-red-500 mt-1">{errors.type.message}</p>
+          )}
+        </div>
       </div>
 
-      {/* Categories Section */}
-      <div className="space-y-4 border-t border-gray-100 dark:border-neutral-800 pt-6">
-        <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2">
-          Categories
-        </h3>
-        <div className="grid grid-cols-1 gap-4">
-          {staticCategories.map((category: Category) => (
-            <div
-              key={category.id}
-              className="border rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-800 transition border-gray-200 dark:border-neutral-700"
+      {/* Categories Section - Only show for RED policies */}
+      {selectedType === "RED" && (
+        <div className="space-y-6 border-t border-gray-100 dark:border-neutral-800 pt-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-gray-100">
+                Categories
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Select categories to include in this policy
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              onClick={handleCreateCategory}
+              className="shrink-0"
             >
-              {/* Category Header */}
-              <div className="flex items-start gap-3 p-4 border-b border-gray-100 dark:border-neutral-800">
-                <Checkbox
-                  id={`category-${category.id}`}
-                  checked={selectedCategoryIds.includes(category.id)}
-                  onCheckedChange={() => handleCategoryToggle(category.id)}
-                />
-                <div className="flex-1">
-                  <label
-                    htmlFor={`category-${category.id}`}
-                    className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-none cursor-pointer"
-                  >
-                    {category.category}
-                  </label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {category.description}
-                  </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                    {category.probes.length} probes available
-                  </p>
-                </div>
-              </div>
+              <span className="text-lg mr-2">+</span>
+              Create Category
+            </Button>
+          </div>
 
-              {/* Probes List */}
-              <div className="p-4 pt-3">
-                <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
-                  Available Probes
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {category.probes.map((probe) => (
-                    <div
-                      key={probe.id}
-                      className="text-xs p-2 bg-gray-50 dark:bg-neutral-800 rounded border border-gray-200 dark:border-neutral-700"
-                    >
-                      <div className="font-medium text-gray-900 dark:text-gray-100">
-                        {probe.name}
+          {selectedCategoryIds && selectedCategoryIds.length > 0 && (
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              {selectedCategoryIds.length} categor{selectedCategoryIds.length !== 1 ? 'ies' : 'y'} selected
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {categories?.docs?.map((category) => {
+              const isSelected = selectedCategoryIds.includes(category.id);
+              const isExpanded = expandedCategories.has(category.id);
+
+              return (
+                <div
+                  key={category.id}
+                  className={`border rounded-lg transition-colors cursor-pointer ${
+                    isSelected
+                      ? 'border-green-500 bg-green-50/30 dark:bg-green-900/10'
+                      : 'border-gray-200 dark:border-neutral-700 hover:border-gray-300 dark:hover:border-neutral-600'
+                  }`}
+                  onClick={() => handleCategoryToggle(category.id)}
+                >
+                  {/* Category Header */}
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`w-5 h-5 mt-0.5 border-2 rounded flex items-center justify-center cursor-pointer transition-colors ${
+                          isSelected
+                            ? 'border-green-500 bg-green-500'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCategoryToggle(category.id);
+                        }}
+                      >
+                        {isSelected && (
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
                       </div>
-                      <div className="text-gray-500 dark:text-gray-400 mt-0.5">
-                        {probe.description}
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <label
+                              htmlFor={`category-${category.id}`}
+                              className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-tight cursor-pointer"
+                            >
+                              {category.name}
+                            </label>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              {category.description}
+                            </p>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                              {Array.isArray(category.probes) ? category.probes.length : 0} probes
+                            </div>
+                          </div>
+
+                          <div className="flex gap-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewCategory(category.id);
+                              }}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditCategory(category.id);
+                              }}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteCategory(category.id);
+                              }}
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Probes Section */}
+                  <div className="border-t border-gray-100 dark:border-neutral-800">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCategoryExpansion(category.id);
+                      }}
+                      className="w-full flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors text-left"
+                    >
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        Available Probes
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {Array.isArray(category.probes) ? category.probes.length : 0}
+                        </span>
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 text-gray-400" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-gray-400" />
+                        )}
+                      </div>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="px-4 py-4">
+                        <div className="grid grid-cols-4 lg:grid-cols-4 md:grid-cols-2 sm:grid-cols-1 gap-2">
+                          {Array.isArray(category.probes) && category.probes.length > 0 ? (
+                            category.probes.map((probe: CategoryProbe) => (
+                                <div
+                                  key={probe.probeId}
+                                  className="flex items-center gap-2 p-2 text-xs bg-gray-50 dark:bg-neutral-800 rounded border border-gray-200 dark:border-neutral-700"
+                                >
+                                  <div className="w-1.5 h-1.5 rounded-full bg-gray-400 flex-shrink-0"></div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                                      {probe.probe.name}
+                                    </div>
+                                  </div>
+                                </div>
+
+                            ))
+                          ) : (
+                            <div className="col-span-full text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                              No probes available
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {(!categories?.docs || categories.docs.length === 0) && (
+            <div className="text-center py-8 border-2 border-dashed border-gray-200 dark:border-neutral-700 rounded-lg">
+              <div className="text-gray-400 dark:text-gray-500 mb-2">
+                <span className="text-3xl">+</span>
+              </div>
+              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+                No categories available
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                Create your first category to get started
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleCreateCategory}
+              >
+                <span className="text-lg mr-2">+</span>
+                Create Category
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Detectors Section - Only show for RED policies */}
+      {selectedType === "RED" && (
+        <div className="space-y-4 border-t border-gray-100 dark:border-neutral-800 pt-6">
+          <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2">
+            Detectors
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {detectors?.docs?.map((detector) => (
+              <div
+                key={detector.id}
+                className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-800 transition border-gray-200 dark:border-neutral-700"
+              >
+                <Checkbox
+                  id={`detector-${detector.id}`}
+                  checked={selectedDetectorIds.includes(detector.id)}
+                  onCheckedChange={() => handleDetectorToggle(detector.id)}
+                />
+                <div className="flex flex-col">
+                  <label
+                    htmlFor={`detector-${detector.id}`}
+                    className="text-sm font-medium text-gray-900 dark:text-gray-100"
+                  >
+                    {detector.detectorName || "Unnamed Detector"}
+                  </label>
+                  {detector.description && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {detector.description}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                    Type: {detector.detectorType} • Confidence:{" "}
+                    {detector.confidence ? `${(detector.confidence * 100).toFixed(0)}%` : "N/A"}
+                  </p>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Detectors Section */}
-      <div className="space-y-4 border-t border-gray-100 dark:border-neutral-800 pt-6">
-        <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2">
-          Detectors
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {detectors?.docs?.map((detector) => (
-            <div
-              key={detector.id}
-              className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-800 transition border-gray-200 dark:border-neutral-700"
-            >
-              <Checkbox
-                id={`detector-${detector.id}`}
-                checked={selectedDetectorIds.includes(detector.id)}
-                onCheckedChange={() => handleDetectorToggle(detector.id)}
-              />
-              <div className="flex flex-col">
-                <label
-                  htmlFor={`detector-${detector.id}`}
-                  className="text-sm font-medium text-gray-900 dark:text-gray-100"
-                >
-                  {detector.detectorName || "Unnamed Detector"}
-                </label>
-                {detector.description && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {detector.description}
-                  </p>
-                )}
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                  Type: {detector.detectorType} • Confidence:{" "}
-                  {detector.confidence ? `${(detector.confidence * 100).toFixed(0)}%` : "N/A"}
-                </p>
+      {/* BLUE Policy Configuration */}
+      {selectedType === "BLUE" && (
+        <div className="space-y-6 border-t border-gray-100 dark:border-neutral-800 pt-8">
+          <div>
+            <h3 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-gray-100 mb-2">
+              BLUE Policy Configuration
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Configure LLM Guard scanners for BLUE policies
+            </p>
+          </div>
+
+          {/* Scanner Selection */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select Scanners
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                {availableScanners.map((scanner) => {
+                  // Map scanner names to form field names
+                  const fieldName = {
+                    "Anonymize": "anonymize",
+                    "BanCode": "banCode",
+                    "BanCompetitors": "banCompetitors",
+                    "BanSubstrings": "banSubstrings",
+                    "BanTopics": "banTopics",
+                    "Code": "code",
+                    "Gibberish": "gibberish",
+                    "Language": "language",
+                    "PromptInjection": "promptInjection",
+                    "Regex": "regex",
+                    "Secrets": "secrets",
+                    "Sentiment": "sentiment",
+                    "TokenLimit": "tokenLimit",
+                    "Toxicity": "toxicity",
+                  }[scanner];
+
+                  return (
+                    <div key={scanner} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`scanner-${scanner}`}
+                        checked={enabledScanners.includes(scanner)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setEnabledScanners([...enabledScanners, scanner]);
+                            setValue(fieldName as any, true);
+                          } else {
+                            setEnabledScanners(enabledScanners.filter(s => s !== scanner));
+                            setValue(fieldName as any, false);
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor={`scanner-${scanner}`}
+                        className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+                      >
+                        {scanner}
+                      </label>
+                    </div>
+                  );
+                })}
               </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                {enabledScanners.length} scanner{enabledScanners.length !== 1 ? 's' : ''} selected
+              </p>
             </div>
-          ))}
+          </div>
+
+          {/* Scanner Configurations */}
+          <div className="space-y-4">
+            {enabledScanners.includes("Anonymize") && (
+              <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
+                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Anonymize</h4>
+                </summary>
+                <div className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("anonymize")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Anonymize</label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Anonymize Types</label>
+                      <Controller
+                        name="anonymizeType"
+                        control={control}
+                        render={({ field }) => (
+                          <TagInput
+                            value={field.value || []}
+                            onChange={field.onChange}
+                            placeholder="Add anonymize type (e.g., name, email)"
+                            className="mt-1"
+                          />
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Hidden Names</label>
+                      <Controller
+                        name="anonymizeHiddenNames"
+                        control={control}
+                        render={({ field }) => (
+                          <TagInput
+                            value={typeof field.value === 'string' ? field.value.split(',').map(s => s.trim()).filter(Boolean) : (field.value || [])}
+                            onChange={(value) => field.onChange(value.join(','))}
+                            placeholder="Add hidden name"
+                            className="mt-1"
+                          />
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Allowed Names</label>
+                      <Controller
+                        name="anonymizeAllowedNames"
+                        control={control}
+                        render={({ field }) => (
+                          <TagInput
+                            value={typeof field.value === 'string' ? field.value.split(',').map(s => s.trim()).filter(Boolean) : (field.value || [])}
+                            onChange={(value) => field.onChange(value.join(','))}
+                            placeholder="Add allowed name"
+                            className="mt-1"
+                          />
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Preamble</label>
+                      <Input
+                        placeholder="Anonymized content notice"
+                        {...register("anonymizePreamble")}
+                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("anonymizeUseFaker")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Use Faker</label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
+                      <Input
+                        type="range"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        {...register("anonymizeThreshold")}
+                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </details>
+            )}
+
+            {/* Ban Code Scanner */}
+            {enabledScanners.includes("BanCode") && (
+              <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
+                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Ban Code</h4>
+                </summary>
+                <div className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("banCode")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Ban Code</label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
+                      <Input
+                        type="range"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        {...register("banCodeThreshold")}
+                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </details>
+            )}
+
+            {/* Ban Competitors Scanner */}
+            {enabledScanners.includes("BanCompetitors") && (
+              <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
+                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Ban Competitors</h4>
+                </summary>
+                <div className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("banCompetitors")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Ban Competitors</label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
+                      <Input
+                        type="range"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        {...register("banCompetitorsThreshold")}
+                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Competitors</label>
+                      <Controller
+                        name="banCompetitorsCompetitors"
+                        control={control}
+                        render={({ field }) => (
+                          <TagInput
+                            value={typeof field.value === 'string' ? field.value.split(',').map(s => s.trim()).filter(Boolean) : (field.value || [])}
+                            onChange={(value) => field.onChange(value.join(','))}
+                            placeholder="Add competitor name"
+                            className="mt-1"
+                          />
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </details>
+            )}
+
+            {/* Ban Substrings Scanner */}
+            {enabledScanners.includes("BanSubstrings") && (
+              <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
+                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Ban Substrings</h4>
+                </summary>
+                <div className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("banSubstrings")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Ban Substrings</label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Match Type</label>
+                      <Controller
+                        name="banSubstringsMatchType"
+                        control={control}
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value === null ? undefined : field.value}>
+                            <SelectTrigger className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700">
+                              <SelectValue placeholder="Select match type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="str">str</SelectItem>
+                              <SelectItem value="word">word</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("banSubstringsCaseSensitive")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Case Sensitive</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("banSubstringsRedact")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Redact</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("banSubstringsContainsAll")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Contains All</label>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Substrings</label>
+                      <Controller
+                        name="banSubstringsSubstrings"
+                        control={control}
+                        render={({ field }) => (
+                          <TagInput
+                            value={typeof field.value === 'string' ? field.value.split(',').map(s => s.trim()).filter(Boolean) : (field.value || [])}
+                            onChange={(value) => field.onChange(value.join(','))}
+                            placeholder="Add substring to ban"
+                            className="mt-1"
+                          />
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </details>
+            )}
+
+            {/* Ban Topics Scanner */}
+            {enabledScanners.includes("BanTopics") && (
+              <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
+                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Ban Topics</h4>
+                </summary>
+                <div className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("banTopics")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Ban Topics</label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
+                      <Input
+                        type="range"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        {...register("banTopicsThreshold")}
+                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Topics</label>
+                      <Controller
+                        name="banTopicsTopics"
+                        control={control}
+                        render={({ field }) => (
+                          <TagInput
+                            value={typeof field.value === 'string' ? field.value.split(',').map(s => s.trim()).filter(Boolean) : (field.value || [])}
+                            onChange={(value) => field.onChange(value.join(','))}
+                            placeholder="Add topic to ban"
+                            className="mt-1"
+                          />
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </details>
+            )}
+
+            {/* Code Scanner */}
+            {enabledScanners.includes("Code") && (
+              <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
+                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Code Detection</h4>
+                </summary>
+                <div className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("code")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Code Detection</label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Languages</label>
+                      <Controller
+                        name="codeLanguages"
+                        control={control}
+                        render={({ field }) => {
+                          const selectedLanguages = typeof field.value === 'string' 
+                            ? field.value.split(',').map(s => s.trim()).filter(Boolean) 
+                            : (field.value || []);
+                          
+                          return (
+                            <div className="mt-1">
+                              <Select 
+                                onValueChange={(value) => {
+                                  if (!selectedLanguages.includes(value)) {
+                                    const newValue = [...selectedLanguages, value].join(',');
+                                    field.onChange(newValue);
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700">
+                                  <SelectValue placeholder="Select programming languages" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {programmingLanguages.map((lang) => (
+                                    <SelectItem 
+                                      key={lang} 
+                                      value={lang}
+                                      disabled={selectedLanguages.includes(lang)}
+                                    >
+                                      {lang}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              
+                              {/* Selected languages as tags */}
+                              {selectedLanguages.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  {selectedLanguages.map((lang) => (
+                                    <div
+                                      key={lang}
+                                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-md"
+                                    >
+                                      {lang}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const newValue = selectedLanguages.filter(l => l !== lang).join(',');
+                                          field.onChange(newValue);
+                                        }}
+                                        className="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-100"
+                                      >
+                                        <X size={12} />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("codeIsBlocked")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Is Blocked</label>
+                    </div>
+                  </div>
+                </div>
+              </details>
+            )}
+
+            {/* Gibberish Scanner */}
+            {enabledScanners.includes("Gibberish") && (
+              <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
+                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Gibberish</h4>
+                </summary>
+                <div className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("gibberish")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Gibberish</label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
+                      <Input
+                        type="range"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        {...register("gibberishThreshold")}
+                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Match Type</label>
+                      <Controller
+                        name="gibberishMatchType"
+                        control={control}
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value === null ? undefined : field.value}>
+                            <SelectTrigger className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700">
+                              <SelectValue placeholder="Select match type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="full">full</SelectItem>
+                              <SelectItem value="sentence">sentence</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </details>
+            )}
+
+            {/* Language Scanner */}
+            {enabledScanners.includes("Language") && (
+              <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
+                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Language</h4>
+                </summary>
+                <div className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("language")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Language</label>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Valid Languages</label>
+                      <Controller
+                        name="languageValidLanguages"
+                        control={control}
+                        render={({ field }) => {
+                          const selectedLanguages = typeof field.value === 'string' 
+                            ? field.value.split(',').map(s => s.trim()).filter(Boolean) 
+                            : (field.value || []);
+                          
+                          return (
+                            <div className="mt-1">
+                              <Select 
+                                onValueChange={(value) => {
+                                  if (!selectedLanguages.includes(value)) {
+                                    const newValue = [...selectedLanguages, value].join(',');
+                                    field.onChange(newValue);
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700">
+                                  <SelectValue placeholder="Select language codes" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {languageCodes.map((lang) => (
+                                    <SelectItem 
+                                      key={lang} 
+                                      value={lang}
+                                      disabled={selectedLanguages.includes(lang)}
+                                    >
+                                      {lang}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              
+                              {/* Selected languages as tags */}
+                              {selectedLanguages.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  {selectedLanguages.map((lang) => (
+                                    <div
+                                      key={lang}
+                                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-md"
+                                    >
+                                      {lang}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const newValue = selectedLanguages.filter(l => l !== lang).join(',');
+                                          field.onChange(newValue);
+                                        }}
+                                        className="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-100"
+                                      >
+                                        <X size={12} />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Match Type</label>
+                      <Controller
+                        name="languageMatchType"
+                        control={control}
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value === null ? undefined : field.value}>
+                            <SelectTrigger className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700">
+                              <SelectValue placeholder="Select match type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="full">full</SelectItem>
+                              <SelectItem value="sentence">sentence</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </details>
+            )}
+
+            {/* Prompt Injection Scanner */}
+            {enabledScanners.includes("PromptInjection") && (
+              <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
+                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Prompt Injection</h4>
+                </summary>
+                <div className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("promptInjection")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Prompt Injection</label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
+                      <Input
+                        type="range"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        {...register("promptInjectionThreshold")}
+                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Match Type</label>
+                      <Controller
+                        name="promptInjectionMatchType"
+                        control={control}
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value === null ? undefined : field.value}>
+                            <SelectTrigger className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700">
+                              <SelectValue placeholder="Select match type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="full">full</SelectItem>
+                              <SelectItem value="sentence">sentence</SelectItem>
+                              <SelectItem value="truncate_token_head_tail">truncate_token_head_tail</SelectItem>
+                              <SelectItem value="truncate_head_tail">truncate_head_tail</SelectItem>
+                              <SelectItem value="chunks">chunks</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </details>
+            )}
+
+            {/* Regex Scanner */}
+            {enabledScanners.includes("Regex") && (
+              <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
+                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Regex</h4>
+                </summary>
+                <div className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("regex")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Regex</label>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Patterns</label>
+                      <Controller
+                        name="regexPatterns"
+                        control={control}
+                        render={({ field }) => (
+                          <TagInput
+                            value={typeof field.value === 'string' ? field.value.split(',').map(s => s.trim()).filter(Boolean) : (field.value || [])}
+                            onChange={(value) => field.onChange(value.join(','))}
+                            placeholder="Add regex pattern"
+                            className="mt-1"
+                          />
+                        )}
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("regexIsBlocked")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Is Blocked</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("regexRedact")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Redact</label>
+                    </div>
+                  </div>
+                </div>
+              </details>
+            )}
+
+            {/* Secrets Scanner */}
+            {enabledScanners.includes("Secrets") && (
+              <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
+                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Secrets</h4>
+                </summary>
+                <div className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("secrets")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Secrets</label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Redact Mode</label>
+                      <Controller
+                        name="secretsRedactMode"
+                        control={control}
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value === null ? undefined : field.value}>
+                            <SelectTrigger className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700">
+                              <SelectValue placeholder="Select redact mode" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All</SelectItem>
+                              <SelectItem value="partial">Partial</SelectItem>
+                              <SelectItem value="hash">Hash</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </details>
+            )}
+
+            {/* Sentiment Scanner */}
+            {enabledScanners.includes("Sentiment") && (
+              <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
+                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Sentiment</h4>
+                </summary>
+                <div className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("sentiment")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Sentiment</label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
+                      <Input
+                        type="range"
+                        step="0.01"
+                        min="-1"
+                        max="1"
+                        {...register("sentimentThreshold")}
+                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Match Type</label>
+                      <Input
+                        placeholder="e.g., sentiment"
+                        {...register("sentimentMatchType")}
+                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </details>
+            )}
+
+            {/* Token Limit Scanner */}
+            {enabledScanners.includes("TokenLimit") && (
+              <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
+                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Token Limit</h4>
+                </summary>
+                <div className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("tokenLimit")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Token Limit</label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Limit</label>
+                      <Input
+                        type="number"
+                        placeholder="4096"
+                        {...register("tokenLimitLimit")}
+                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Encoding Name</label>
+                      <Controller
+                        name="tokenLimitEncodingName"
+                        control={control}
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value === null ? undefined : field.value}>
+                            <SelectTrigger className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700">
+                              <SelectValue placeholder="Select encoding" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="cl100k_base">cl100k_base</SelectItem>
+                              <SelectItem value="p50k_base">p50k_base</SelectItem>
+                              <SelectItem value="r50k_base">r50k_base</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </details>
+            )}
+
+            {/* Toxicity Scanner */}
+            {enabledScanners.includes("Toxicity") && (
+              <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
+                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Toxicity</h4>
+                </summary>
+                <div className="p-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox {...register("toxicity")} />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Toxicity</label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
+                      <Input
+                        type="range"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        {...register("toxicityThreshold")}
+                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Match Type</label>
+                      <Controller
+                        name="toxicityMatchType"
+                        control={control}
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value ? String(field.value) : ""}>
+                            <SelectTrigger className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700">
+                              <SelectValue placeholder="Select match type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="full">full</SelectItem>
+                              <SelectItem value="sentence">sentence</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </details>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-neutral-800">
         <Button
@@ -1038,5 +1722,14 @@ export function PolicyForm({
         </Button>
       </div>
     </form>
+
+    <DeleteConfirmDialog
+      open={deleteDialogOpen}
+      onOpenChange={setDeleteDialogOpen}
+      onConfirm={handleDeleteCategoryConfirm}
+      title="Delete Category"
+      description="Are you sure you want to delete this category? This action cannot be undone."
+    />
+    </>
   );
 }

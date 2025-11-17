@@ -51,6 +51,11 @@ const navigation = [
     icon: FileText,
   },
   {
+    name: 'Categories',
+    href: '/categories',
+    icon: Shield,
+  },
+  {
     name: 'Detectors',
     href: '/detectors',
     icon: Shield,
@@ -60,11 +65,11 @@ const navigation = [
     href: '/tests',
     icon: Activity,
   },
-  {
-    name: 'Agentic Radar',
-    href: '/agentic-radar/scan',
-    icon: Radar,
-  },
+  // {
+  //   name: 'Agentic Radar',
+  //   href: '/agentic-radar/scan',
+  //   icon: Radar,
+  // },
   // {
   //   name: "configurations",
   //   href: "/configurations",

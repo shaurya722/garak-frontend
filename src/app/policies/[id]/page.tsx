@@ -19,18 +19,145 @@ export default function PolicyPage() {
   const { id } = useParams();
   const { data: policy, isLoading } = usePolicy(id as string);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const deleteMutation = useDeletePolicy();
 
-  const handleDelete = async () => {
-    try {
-      await deleteMutation.mutateAsync(id as string);
-      toast.success('Policy deleted successfully');
-      router.push('/policies');
-    } catch (error) {
-      console.error('Failed to delete policy', error);
-      toast.error('Failed to delete policy');
+  
+  if (!policy)
+    return (
+      <MainLayout>
+        <div className="flex flex-col justify-center items-center min-h-screen text-muted-foreground">
+          <Layers className="w-10 h-10 text-destructive mb-3" />
+          <p>Policy not found</p>
+        </div>
+      </MainLayout>
+    );
+
+  const renderScannerDetails = (scanner: string) => {
+    switch (scanner) {
+      case 'Anonymize':
+        return (
+          <div className="space-y-2">
+            <div><strong>Type:</strong> {policy.anonymizeType?.join(', ') || 'None'}</div>
+            <div><strong>Hidden Names:</strong> {policy.anonymizeHiddenNames?.join(', ') || 'None'}</div>
+            <div><strong>Allowed Names:</strong> {policy.anonymizeAllowedNames?.join(', ') || 'None'}</div>
+            <div><strong>Preamble:</strong> {policy.anonymizePreamble || 'None'}</div>
+            <div><strong>Use Faker:</strong> {policy.anonymizeUseFaker ? 'Yes' : 'No'}</div>
+            <div><strong>Threshold:</strong> {policy.anonymizeThreshold || 'N/A'}</div>
+          </div>
+        );
+      case 'BanCode':
+        return (
+          <div className="space-y-2">
+            <div><strong>Threshold:</strong> {policy.banCodeThreshold || 'N/A'}</div>
+          </div>
+        );
+      case 'BanCompetitors':
+        return (
+          <div className="space-y-2">
+            <div><strong>Competitors:</strong> {policy.banCompetitorsCompetitors?.join(', ') || 'None'}</div>
+            <div><strong>Threshold:</strong> {policy.banCompetitorsThreshold || 'N/A'}</div>
+          </div>
+        );
+      case 'BanSubstrings':
+        return (
+          <div className="space-y-2">
+            <div><strong>Substrings:</strong> {policy.banSubstringsSubstrings?.join(', ') || 'None'}</div>
+            <div><strong>Match Type:</strong> {policy.banSubstringsMatchType || 'N/A'}</div>
+            <div><strong>Case Sensitive:</strong> {policy.banSubstringsCaseSensitive ? 'Yes' : 'No'}</div>
+            <div><strong>Redact:</strong> {policy.banSubstringsRedact ? 'Yes' : 'No'}</div>
+            <div><strong>Contains All:</strong> {policy.banSubstringsContainsAll ? 'Yes' : 'No'}</div>
+          </div>
+        );
+      case 'BanTopics':
+        return (
+          <div className="space-y-2">
+            <div><strong>Topics:</strong> {policy.banTopicsTopics?.join(', ') || 'None'}</div>
+            <div><strong>Threshold:</strong> {policy.banTopicsThreshold || 'N/A'}</div>
+          </div>
+        );
+      case 'Code':
+        return (
+          <div className="space-y-2">
+            <div><strong>Languages:</strong> {policy.codeLanguages?.join(', ') || 'None'}</div>
+            <div><strong>Is Blocked:</strong> {policy.codeIsBlocked ? 'Yes' : 'No'}</div>
+          </div>
+        );
+      case 'Gibberish':
+        return (
+          <div className="space-y-2">
+            <div><strong>Threshold:</strong> {policy.gibberishThreshold || 'N/A'}</div>
+            <div><strong>Match Type:</strong> {policy.gibberishMatchType || 'N/A'}</div>
+          </div>
+        );
+      case 'Language':
+        return (
+          <div className="space-y-2">
+            <div><strong>Valid Languages:</strong> {policy.languageValidLanguages?.join(', ') || 'None'}</div>
+            <div><strong>Match Type:</strong> {policy.languageMatchType || 'N/A'}</div>
+          </div>
+        );
+      case 'PromptInjection':
+        return (
+          <div className="space-y-2">
+            <div><strong>Threshold:</strong> {policy.promptInjectionThreshold || 'N/A'}</div>
+            <div><strong>Match Type:</strong> {policy.promptInjectionMatchType || 'N/A'}</div>
+          </div>
+        );
+      case 'Regex':
+        return (
+          <div className="space-y-2">
+            <div><strong>Patterns:</strong> {policy.regexPatterns?.join(', ') || 'None'}</div>
+            <div><strong>Is Blocked:</strong> {policy.regexIsBlocked ? 'Yes' : 'No'}</div>
+            <div><strong>Redact:</strong> {policy.regexRedact ? 'Yes' : 'No'}</div>
+          </div>
+        );
+      case 'Secrets':
+        return (
+          <div className="space-y-2">
+            <div><strong>Redact Mode:</strong> {policy.secretsRedactMode || 'N/A'}</div>
+          </div>
+        );
+      case 'Sentiment':
+        return (
+          <div className="space-y-2">
+            <div><strong>Threshold:</strong> {policy.sentimentThreshold || 'N/A'}</div>
+            <div><strong>Match Type:</strong> {policy.sentimentMatchType || 'N/A'}</div>
+          </div>
+        );
+      case 'TokenLimit':
+        return (
+          <div className="space-y-2">
+            <div><strong>Limit:</strong> {policy.tokenLimitLimit || 'N/A'}</div>
+            <div><strong>Encoding Name:</strong> {policy.tokenLimitEncodingName || 'N/A'}</div>
+          </div>
+        );
+      case 'Toxicity':
+        return (
+          <div className="space-y-2">
+            <div><strong>Threshold:</strong> {policy.toxicityThreshold || 'N/A'}</div>
+            <div><strong>Match Type:</strong> {policy.toxicityMatchType || 'N/A'}</div>
+          </div>
+        );
+      default:
+        return <div>No details available</div>;
     }
   };
+
+  const enabledScanners = [
+    policy.anonymize && 'Anonymize',
+    policy.banCode && 'BanCode',
+    policy.banCompetitors && 'BanCompetitors',
+    policy.banSubstrings && 'BanSubstrings',
+    policy.banTopics && 'BanTopics',
+    policy.code && 'Code',
+    policy.gibberish && 'Gibberish',
+    policy.language && 'Language',
+    policy.promptInjection && 'PromptInjection',
+    policy.regex && 'Regex',
+    policy.secrets && 'Secrets',
+    policy.sentiment && 'Sentiment',
+    policy.tokenLimit && 'TokenLimit',
+    policy.toxicity && 'Toxicity',
+  ].filter(Boolean);
 
   if (isLoading)
     return (
@@ -97,91 +224,126 @@ export default function PolicyPage() {
             </div>
           </CardHeader>
 
-          {/* <Separator /> */}
-
           <CardContent className="mt-6 grid gap-8 md:grid-cols-2">
-            {/* === Categories Section === */}
-            <div>
-              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-primary" /> Categories
-              </h3>
-              <div className="space-y-3">
-                {policy.categories?.length ? (
-                  policy.categories.map((cat) => (
-                    <div
-                      key={cat.id}
-                      className="p-3 rounded-lg border hover:shadow-sm transition-all bg-muted/40"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{cat.name}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {cat.category}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {cat.description}
+            {policy.type === "RED" ? (
+              <>
+                {/* === Categories Section === */}
+                <div>
+                  <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-primary" /> Categories
+                  </h3>
+                  <div className="space-y-3">
+                    {policy.categories?.length ? (
+                      policy.categories.map((cat) => (
+                        <div
+                          key={cat.id}
+                          className="p-3 rounded-lg border hover:shadow-sm transition-all bg-muted/40"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{cat.name}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {cat.category}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {cat.description}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground text-sm">
+                        No categories assigned
                       </p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    No categories assigned
-                  </p>
-                )}
-              </div>
-            </div>
+                    )}
+                  </div>
+                </div>
 
-            {/* === Detectors Section === */}
-            <div>
-              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                <Shield className="w-4 h-4 text-primary" /> Detectors
-              </h3>
-              <div className="space-y-3">
-                {policy.detectors?.length ? (
-                  policy.detectors.map((det) => (
-                    <div
-                      key={det.id}
-                      className="p-3 rounded-lg border hover:shadow-sm transition-all bg-muted/40"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">
-                          {det.detectorName}
-                        </span>
-                        <Badge variant="outline" className="text-xs">
-                          {det.detectorType}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {det.description}
+                {/* === Detectors Section === */}
+                <div>
+                  <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-primary" /> Detectors
+                  </h3>
+                  <div className="space-y-3">
+                    {policy.detectors?.length ? (
+                      policy.detectors.map((det) => (
+                        <div
+                          key={det.id}
+                          className="p-3 rounded-lg border hover:shadow-sm transition-all bg-muted/40"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">
+                              {det.detectorName}
+                            </span>
+                            <Badge variant="outline" className="text-xs">
+                              {det.detectorType}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {det.description}
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                            <Badge variant="secondary">
+                              {det.creationType}
+                            </Badge>
+                            <Badge variant="outline">
+                              Confidence: {(det.confidence * 100).toFixed(0)}%
+                            </Badge>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground text-sm">
+                        No detectors assigned
                       </p>
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                        <Badge variant="secondary">
-                          {det.creationType}
-                        </Badge>
-                        <Badge variant="outline">
-                          Confidence: {(det.confidence * 100).toFixed(0)}%
-                        </Badge>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    No detectors assigned
-                  </p>
-                )}
-              </div>
-            </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* === Enabled Scanners Section === */}
+                <div className="md:col-span-2">
+                  <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-primary" /> Enabled Scanners
+                  </h3>
+                  <div className="space-y-3">
+                    {enabledScanners.length ? (
+                      enabledScanners.map((scanner) => (
+                        <div
+                          key={scanner}
+                          className="p-3 rounded-lg border hover:shadow-sm transition-all bg-muted/40"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium">{scanner}</span>
+                            <Badge variant="outline" className="text-xs">
+                              Enabled
+                            </Badge>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {renderScannerDetails(scanner)}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground text-sm">
+                        No scanners enabled
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
-        {/* Delete Confirmation Dialog */}
+        {/* Delete Confirmation Dialog
         <DeleteConfirmDialog
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
           onConfirm={handleDelete}
           title="Delete Policy"
           description="Are you sure you want to delete this policy? This action cannot be undone."
-        />
+        /> */}
       </div>
     </MainLayout>
   );

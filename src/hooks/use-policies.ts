@@ -1,6 +1,7 @@
 // src/hooks/use-policies.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { policyService, PolicyResponse, Policy } from '@/services/policy/policy.service';
+import { policyService, PolicyResponse } from '@/services/policy/policy.service';
+import { Policy } from '@/types/policies.type';
 import { toast } from 'sonner';
 
 export const usePolicies = (params?: { page?: number; limit?: number }) => {
@@ -64,5 +65,13 @@ export const useDeletePolicy = () => {
       queryClient.invalidateQueries({ queryKey: ['policies'], exact: false });
       toast.success('Policy deleted successfully');
     },
+  });
+};
+
+export const usePolicyDropdown = () => {
+  return useQuery({
+    queryKey: ['policy-dropdown'],
+    queryFn: () => policyService.getPolicyDropdown(),
+    staleTime: 1000 * 60 * 5, // 5 minutes - dropdown data changes less frequently
   });
 };

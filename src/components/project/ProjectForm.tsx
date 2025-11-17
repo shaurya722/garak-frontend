@@ -30,6 +30,8 @@ import Link from 'next/link';
 import { useCreateProject, useUpdateProject, useProject } from '@/hooks/use-projects';
 import { CreateProjectPayload } from '@/types';
 import MainLayout from '@/components/layout/main-layout';
+import { usePolicyDropdown } from '@/hooks/use-policies';
+import { Policy } from '@/types/policies.type';
 
 // Helper function to beautify JSON
 const beautifyJSON = (jsonString: string): string => {
@@ -45,6 +47,7 @@ const beautifyJSON = (jsonString: string): string => {
 const projectFormSchema = z.object({
   name: z.string().min(1, 'Project name is required'),
   description: z.string().min(1, 'Description is required'),
+  policyId: z.string().min(1, 'Policy is required'),
   type: z.enum(['RED', 'BLUE', 'AGENTIC']),
   // Red team fields - conditionally required
   redModelType: z.enum(['OPENAI', 'ANTHROPIC', 'GOOGLE', 'REST', 'HUGGING_FACE', 'HUGGING_FACE_INFERENCE_API', 'HUGGING_FACE_INFERENCE_ENDPOINT', 'REPLICATE', 'COHERE', 'GROQ', 'NIM', 'GGML']).optional(),
@@ -52,10 +55,12 @@ const projectFormSchema = z.object({
   redModelUrl: z.string().optional(),
   redModelToken: z.string().optional(),
   redAuthorizationType: z.enum(['BEARER', 'API_KEY', 'BASIC', 'CUSTOM', 'NONE']).optional(),
-  redAuthorizationValue: z.string().optional(),
+  // redAuthorizationValue: z.string().optional(),
   redRequestTemplate: z.string().optional(),
   // Agentic field
   agenticZipUrl: z.string().optional(),
+  // Blue team field
+  blueDomain: z.string().optional(),
 }).superRefine((data, ctx) => {
   // RED team validation
   if (data.type === 'RED') {
@@ -85,13 +90,14 @@ const projectFormSchema = z.object({
       }
       if (data.redAuthorizationType === 'NONE') {
         // For NONE authorization type, value should be null - no validation needed
-      } else if (!data.redAuthorizationValue) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Authorization value is required for REST models',
-          path: ['redAuthorizationValue'],
-        });
       }
+      //  else if (!data.redAuthorizationValue) {
+      //   ctx.addIssue({
+      //     code: z.ZodIssueCode.custom,
+      //     message: 'Authorization value is required for REST models',
+      //     path: ['redAuthorizationValue'],
+      //   });
+      // }
       if (!data.redRequestTemplate) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -133,6 +139,17 @@ const projectFormSchema = z.object({
   if (data.type === 'AGENTIC') {
     // No additional validation for AGENTIC type
   }
+
+  // BLUE team validation
+  if (data.type === 'BLUE') {
+    if (!data.blueDomain) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Domain is required for BLUE team projects',
+        path: ['blueDomain'],
+      });
+    }
+  }
 });
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
@@ -153,19 +170,21 @@ export function ProjectForm({ projectId, mode }: ProjectFormProps) {
     defaultValues: {
       name: '',
       description: '',
+      policyId: undefined,
       type: 'RED',
       redModelType: 'OPENAI',
       redModelName: '',
       redModelUrl: '',
       redModelToken: '',
       redAuthorizationType: 'BEARER',
-      redAuthorizationValue: '',
+      // redAuthorizationValue: '',
       redRequestTemplate: JSON.stringify({
         model: 'gpt-4',
         messages: [{ role: 'user', content: 'Hello, world!' }],
         max_tokens: 100
       }, null, 2),
       agenticZipUrl: undefined,
+      blueDomain: '',
     },
   });
 
@@ -173,23 +192,27 @@ export function ProjectForm({ projectId, mode }: ProjectFormProps) {
   const watchedRedModelType = form.watch('redModelType');
   const watchedAuthorizationType = form.watch('redAuthorizationType');
 
-  // Load existing project data for edit mode
+  // Fetch policy dropdown options
+  const { data: policies } = usePolicyDropdown();
+  console.log('ff',policies)
   useEffect(() => {
     if (existingProject && mode === 'edit') {
       form.reset({
         name: existingProject.name,
         description: existingProject.description,
+        policyId: existingProject.policyId,
         type: existingProject.type,
         redModelType: (existingProject.redModelType === 'CUSTOM' ? 'REST' : existingProject.redModelType) || 'REST',
         redModelName: existingProject.redModelName || '',
         redModelUrl: existingProject.redModelUrl || '',
         redModelToken: existingProject.redModelToken || '',
         redAuthorizationType: existingProject.redAuthorizationType || 'BEARER',
-        redAuthorizationValue: existingProject.redAuthorizationValue || '',
+        // redAuthorizationValue: existingProject.redAuthorizationValue || '',
         redRequestTemplate: existingProject.redRequestTemplate
           ? JSON.stringify(existingProject.redRequestTemplate, null, 2)
           : '',
         agenticZipUrl: existingProject.agenticZipUrl || undefined,
+        // blueDomain: existingProject.blueDomain || '', // TODO: Add to Project type
       });
     }
   }, [existingProject, mode, form]);
@@ -199,6 +222,7 @@ export function ProjectForm({ projectId, mode }: ProjectFormProps) {
       let payload: CreateProjectPayload = {
         name: data.name,
         description: data.description,
+        policyId: data.policyId,
         type: data.type,
       };
 
@@ -210,7 +234,7 @@ export function ProjectForm({ projectId, mode }: ProjectFormProps) {
           ...(data.redModelType === 'REST' ? {
             redModelUrl: data.redModelUrl,
             redAuthorizationType: data.redAuthorizationType,
-            redAuthorizationValue: data.redAuthorizationType === 'NONE' ? null : data.redAuthorizationValue,
+            // redAuthorizationValue: data.redAuthorizationType === 'NONE' ? null : data.redAuthorizationValue,
             // redAuthorizationValue: data.redAuthorizationValue,
             redRequestTemplate: JSON.parse(data.redRequestTemplate || '{}'),
           } : {
@@ -223,8 +247,12 @@ export function ProjectForm({ projectId, mode }: ProjectFormProps) {
           ...payload,
           agenticZipUrl: data.agenticZipUrl,
         } as CreateProjectPayload;
+      } else if (data.type === 'BLUE') {
+        payload = {
+          ...payload,
+          blueDomain: data.blueDomain,
+        } as CreateProjectPayload;
       }
-      // BLUE type has no additional fields
 
       if (mode === 'create') {
         const result = await createMutation.mutateAsync(payload);
@@ -310,8 +338,8 @@ export function ProjectForm({ projectId, mode }: ProjectFormProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="RED">Red Team</SelectItem>
-                          <SelectItem value="BLUE">Blue Team</SelectItem>
+                          <SelectItem value="RED">AI Runtime Security</SelectItem>
+                          <SelectItem value="BLUE">AI Runtime Protection</SelectItem>
                           <SelectItem value="AGENTIC">Agentic</SelectItem>
                         </SelectContent>
                       </Select>
@@ -319,6 +347,32 @@ export function ProjectForm({ projectId, mode }: ProjectFormProps) {
                     </FormItem>
                   )}
                 />
+                {watchedType !== 'AGENTIC' &&(
+                    <FormField
+                      control={form.control}
+                      name="policyId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Policy *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a policy" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {policies?.filter((policy: Policy) => policy.type === watchedType).map((policy: Policy) => (
+                                <SelectItem key={policy.id} value={policy.id}>
+                                  {policy.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    )}
               </CardContent>
             </Card>
 
@@ -434,7 +488,7 @@ export function ProjectForm({ projectId, mode }: ProjectFormProps) {
                             </FormItem>
                           )}
                         />
-                        {watchedRedModelType === 'REST' && watchedAuthorizationType !== 'NONE' && (
+                        {/* {watchedRedModelType === 'REST' && watchedAuthorizationType !== 'NONE' && (
                           <FormField
                             control={form.control}
                             name="redAuthorizationValue"
@@ -448,7 +502,7 @@ export function ProjectForm({ projectId, mode }: ProjectFormProps) {
                             </FormItem>
                           )}
                         />
-                        )}
+                        )} */}
                         <FormField
                           control={form.control}
                           name="redRequestTemplate"
@@ -481,21 +535,21 @@ export function ProjectForm({ projectId, mode }: ProjectFormProps) {
               </>
             )}
 
-            {/* AGENTIC Configuration */}
-            {watchedType === 'AGENTIC' && (
+            {/* BLUE Team Configuration */}
+            {watchedType === 'BLUE' && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Agentic Configuration</CardTitle>
+                  <CardTitle>BLUE Team Configuration</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="agenticZipUrl"
+                    name="blueDomain"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Agentic ZIP URL</FormLabel>
+                        <FormLabel>Domain *</FormLabel>
                         <FormControl>
-                          <Input placeholder="https://example.com/agentic-model.zip" {...field} />
+                          <Input placeholder="e.g., example.com" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

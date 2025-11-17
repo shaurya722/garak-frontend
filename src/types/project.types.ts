@@ -5,6 +5,7 @@ export interface Project {
   name: string;
   description: string;
   type: 'RED' | 'BLUE' | 'AGENTIC';
+  policyId?: string;
   // Red team specific fields
   redModelType?: 'OPENAI' | 'ANTHROPIC' | 'GOOGLE' | 'CUSTOM' | 'REST' | 'HUGGING_FACE' | 'HUGGING_FACE_INFERENCE_API' | 'HUGGING_FACE_INFERENCE_ENDPOINT' | 'REPLICATE' | 'COHERE' | 'GROQ' | 'NIM' | 'GGML' | null;
   redModelName?: string;
@@ -22,6 +23,7 @@ export interface ProjectFormData {
   name: string;
   description: string;
   type: 'RED' | 'BLUE' | 'AGENTIC';
+  policyId?: string;
   // Red team specific fields
   redModelType?: string;
   redModelName?: string;
@@ -37,6 +39,7 @@ export interface CreateProjectPayload {
   name: string;
   description: string;
   type: 'RED' | 'BLUE' | 'AGENTIC';
+  policyId?: string;
   redModelType?: string;
   redModelName?: string;
   redModelUrl?: string;

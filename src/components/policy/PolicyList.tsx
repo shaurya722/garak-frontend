@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePolicies, useDeletePolicy } from '@/hooks/use-policies';
-import { Plus, Search, Trash2, Edit, Eye } from 'lucide-react';
+import { Plus, Search, Trash2, Edit, Eye, ChevronDown, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -14,6 +14,7 @@ import { DeleteConfirmDialog } from '@/components/dialogs/delete-confirmation-di
 import { Pagination } from "@/components/shared/pagination";
 import MainLayout from '@/components/layout/main-layout';
 import { PageLoader } from "@/components/shared";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export function PolicyList() {
   const router = useRouter();
@@ -52,6 +53,8 @@ export function PolicyList() {
     }
   };
 
+
+
   if (isLoading) return (
         <MainLayout>
           <PageLoader message="Loading policies..." />
@@ -82,58 +85,61 @@ export function PolicyList() {
         </div>
       </div>
 
-      <div className="space-y-4">
-        {data?.docs?.map((policy) => (
-          <div
-            key={policy.id}
-            className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-medium">{policy.name}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {policy.description}
-                </p>
-                <div className="mt-2 space-x-2">
-                  <Badge variant={policy.defaultDetector ? 'default' : 'outline'}>
-                    {policy.defaultDetector ? 'Default' : 'Custom'}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Updated</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data?.docs?.map((policy) => (
+            <>
+              <TableRow key={policy.id}>
+              
+                <TableCell className="font-medium">{policy.name}</TableCell>
+                <TableCell>{policy.description}</TableCell>
+                <TableCell>
+                  <Badge variant={policy.type === 'RED' ? 'destructive' : 'blue'}>
+                    {policy.type === 'RED' ? 'RED' : 'BLUE'}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    Updated {formatDate(policy.updatedAt)}
-                  </span>
-                </div>
-              </div>
-              <div className="flex space-x-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => router.push(`/policies/${policy.id}`)}
-
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => router.push(`/policies/${policy.id}/edit`)}
-                  disabled={policy.defaultDetector}
-
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeleteClick(policy.id)}
-                  disabled={policy.defaultDetector}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+                </TableCell>
+                <TableCell>{formatDate(policy.updatedAt)}</TableCell>
+                <TableCell>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => router.push(`/policies/${policy.id}`)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => router.push(`/policies/${policy.id}/edit`)}
+                      disabled={policy.defaultDetector}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteClick(policy.id)}
+                      disabled={policy.defaultDetector}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </>
+          ))}
+        </TableBody>
+      </Table>
 
       {/* Pagination */}
       {data && data.totalPages > 0 && (

@@ -1,11 +1,11 @@
-// src/components/project/ProjectList.tsx
+// src/components/category/CategoryList.tsx
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useProjects, useDeleteProject } from '@/hooks/use-projects';
+import { useCategories, useDeleteCategory } from '@/hooks/use-categories';
 import { Plus, Search, Trash2, Edit, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
@@ -16,16 +16,16 @@ import MainLayout from '@/components/layout/main-layout';
 import { PageLoader } from "@/components/shared";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-export function ProjectList() {
+export function CategoryList() {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const { data, isLoading, isError } = useProjects({ page, limit });
-  const deleteMutation = useDeleteProject();
+  const { data, isLoading, isError } = useCategories({ page, limit });
+  const deleteMutation = useDeleteCategory();
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -37,30 +37,30 @@ export function ProjectList() {
   };
 
   const handleDeleteClick = (id: string) => {
-    setSelectedProject(id);
+    setSelectedCategory(id);
     setDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
-    if (!selectedProject) return;
+    if (!selectedCategory) return;
 
     try {
-      await deleteMutation.mutateAsync(selectedProject);
-      toast.success('Project deleted successfully');
+      await deleteMutation.mutateAsync(selectedCategory);
+      toast.success('Category deleted successfully');
       setDeleteDialogOpen(false);
     } catch {
-      toast.error('Failed to delete project');
+      toast.error('Failed to delete category');
     }
   };
 
   if (isLoading) return (
     <MainLayout>
-      <PageLoader message="Loading projects..." />
+      <PageLoader message="Loading categories..." />
     </MainLayout>
   );
   if (isError) return (
     <MainLayout>
-      <div>Error loading projects</div>
+      <div>Error loading categories</div>
     </MainLayout>
   );
 
@@ -68,9 +68,9 @@ export function ProjectList() {
     <MainLayout>
       <div className="container mx-auto p-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Projects</h1>
-          <Button onClick={() => router.push('/projects/new')}>
-            <Plus className="mr-2 h-4 w-4" /> New Project
+          <h1 className="text-2xl font-bold">Categories</h1>
+          <Button onClick={() => router.push('/categories/new')}>
+            <Plus className="mr-2 h-4 w-4" /> New Category
           </Button>
         </div>
 
@@ -79,7 +79,7 @@ export function ProjectList() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search projects..."
+              placeholder="Search categories..."
               className="pl-8 w-full"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -92,60 +92,38 @@ export function ProjectList() {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Model Type</TableHead>
+              <TableHead>Probes</TableHead>
               <TableHead>Created</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.docs?.map((project) => (
-              <TableRow key={project.id}>
-                <TableCell className="font-medium">{project.name}</TableCell>
-                <TableCell>{project.description}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      project.type === 'RED'
-                        ? 'destructive'
-                        : project.type === 'BLUE'
-                        ? 'blue'
-                        : 'default'
-                    }
-                  >
-                    {project.type} Team
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {project.redModelType && (
-                    <Badge variant="outline">
-                      {project.redModelType}
-                    </Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {project.createdAt && formatDate(project.createdAt)}
-                </TableCell>
+            {data?.docs?.map((category) => (
+              <TableRow key={category.id}>
+                <TableCell className="font-medium">{category.name}</TableCell>
+                <TableCell title={category.description}>{category.description.length > 40 ? `${category.description.substring(0, 40)}...` : category.description}</TableCell>
+                <TableCell>{category.probes?.length || 0} probes</TableCell>
+                <TableCell>{formatDate(category.createdAt)}</TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => router.push(`/projects/${project.id}`)}
+                      onClick={() => router.push(`/categories/${category.id}`)}
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => router.push(`/projects/${project.id}/edit`)}
+                      onClick={() => router.push(`/categories/${category.id}/edit`)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleDeleteClick(project.id!)}
+                      onClick={() => handleDeleteClick(category.id)}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -171,8 +149,8 @@ export function ProjectList() {
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
           onConfirm={handleDeleteConfirm}
-          title="Delete Project"
-          description="Are you sure you want to delete this project? This action cannot be undone."
+          title="Delete Category"
+          description="Are you sure you want to delete this category? This action cannot be undone."
         />
       </div>
     </MainLayout>

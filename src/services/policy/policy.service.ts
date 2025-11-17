@@ -1,4 +1,5 @@
 import api from '@/services/api/api-client';
+import { Policy, PolicyCreateData, PolicyUpdateData } from '@/types/policies.type';
 
 const POLICY_BASE_URL = '/management/company/policy';
 
@@ -7,6 +8,11 @@ export const policyService = {
     const queryParams = params ? `?page=${params.page || 1}&limit=${params.limit || 10}` : '?page=1&limit=10';
     const response = await api.post(`${POLICY_BASE_URL}/list${queryParams}`);
     return response.data.data || response.data;
+  },
+
+  getPolicyDropdown: async () => {
+    const response = await api.get(`${POLICY_BASE_URL}/dropdown`);
+    return response.data.data?.policies || response.data.policies || [];
   },
 
   getPolicy: async (id: string) => {
@@ -28,41 +34,6 @@ export const policyService = {
     await api.delete(`${POLICY_BASE_URL}/${id}`);
   },
 };
-
-export interface Policy {
-  id: string;
-  name: string;
-  description: string;
-  defaultDetector: boolean;
-  categoryIds: string[] | null;
-  detectorIds: string[] | null;
-  categories?: Array<{
-    id: string;
-    name: string;
-    description: string;
-    category: string;
-  }>;
-  detectors?: Array<{
-    id: string;
-    detectorName: string;
-    description: string;
-    detectorType: string;
-    creationType: string;
-    confidence: number;
-  }>;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface PolicyCreateData {
-  name: string;
-  description: string;
-  defaultDetector: boolean;
-  categoryIds: string[] | null;
-  detectorIds: string[] | null;
-}
-
-export type PolicyUpdateData = Partial<PolicyCreateData>;
 
 export interface PolicyResponse {
   docs: Policy[];
