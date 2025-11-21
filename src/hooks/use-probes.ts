@@ -35,6 +35,6 @@ export const useProbes = (params?: { page?: number; limit?: number }) => {
   return useQuery<ProbeResponse>({
     queryKey: ['probes', page, limit],
     queryFn: () => probeService.getProbes({ page, limit }),
-    staleTime: 1000 * 60, // 10 seconds - data stays fresh for 10s
+    staleTime: 1000 * 60, // 10 seconds 
   });
 };

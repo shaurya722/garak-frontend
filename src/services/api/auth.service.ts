@@ -8,14 +8,8 @@ import {
 } from "@/types";
 import { handleApiError, authStorage } from "@/lib/utils";
 
-/**
- * Auth Service
- * All API calls related to authentication
- */
 export const authService = {
-  /**
-   * Login with company credentials
-   */
+
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
       const response = await apiClient.post<LoginResponse>(
@@ -35,7 +29,6 @@ export const authService = {
         throw new Error("No access token received");
       }
 
-      // Store token
       authStorage.setToken(accessToken);
 
       return data;
@@ -44,9 +37,7 @@ export const authService = {
     }
   },
 
-  /**
-   * Register a new company account
-   */
+
   async register(credentials: RegisterCredentials): Promise<User> {
     try {
       const response = await apiClient.post<{ data: User }>(
@@ -60,26 +51,18 @@ export const authService = {
     }
   },
 
-  /**
-   * Logout - clear local storage
-   */
+
   logout(): void {
     authStorage.clearAuth();
   },
 
-  /**
-   * Check if user is authenticated
-   */
+
   isAuthenticated(): boolean {
     return !!authStorage.getToken();
   },
 
-  /**
-   * Get current user (if stored locally)
-   */
+
   getCurrentUser(): User | null {
-    // You can implement this if user data is stored in localStorage
-    // For now, return null
     return null;
   },
 };

@@ -1,4 +1,3 @@
-// src/app/categories/new/page.tsx
 'use client';
 
 import React from 'react';

@@ -1,4 +1,3 @@
-// src/app/categories/[id]/edit/page.tsx
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';

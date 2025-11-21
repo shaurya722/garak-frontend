@@ -12,10 +12,8 @@ export const categoryService = {
   getCategory: async (id: string) => {
     const response = await api.get(`${CATEGORY_BASE_URL}/${id}`);
 
-    // Handle nested API response structure according to the provided API format
     let result = response.data.data || response.data;
 
-    // Extract category from data.category structure
     if (result?.category) {
       result = result.category;
     }

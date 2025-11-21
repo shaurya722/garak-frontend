@@ -1,4 +1,3 @@
-// src/components/log/LogDetailDialog.tsx
 'use client';
 
 import {

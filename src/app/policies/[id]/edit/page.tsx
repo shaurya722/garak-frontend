@@ -1,4 +1,3 @@
-// src/app/policies/[id]/edit/page.tsx
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';

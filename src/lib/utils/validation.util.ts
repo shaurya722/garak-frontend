@@ -1,18 +1,9 @@
-/**
- * Common validation utilities
- */
-
-/**
- * Validate email format
- */
 export function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
 
-/**
- * Validate URL format
- */
+
 export function isValidUrl(url: string): boolean {
   try {
     new URL(url);
@@ -22,9 +13,7 @@ export function isValidUrl(url: string): boolean {
   }
 }
 
-/**
- * Validate regex pattern
- */
+
 export function isValidRegex(pattern: string): boolean {
   try {
     new RegExp(pattern);
@@ -34,17 +23,11 @@ export function isValidRegex(pattern: string): boolean {
   }
 }
 
-/**
- * Check if value is in range
- */
 export function isInRange(value: number, min: number, max: number): boolean {
   return value >= min && value <= max;
 }
 
-/**
- * Validate password strength
- * At least 8 characters, 1 uppercase, 1 lowercase, 1 number
- */
+
 export function validatePassword(password: string): {
   isValid: boolean;
   errors: string[];

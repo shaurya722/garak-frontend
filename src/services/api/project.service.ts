@@ -9,21 +9,16 @@ import {
 } from "@/types";
 import { handleApiError } from "@/lib/utils";
 
-/**
- * Project Service
- * All API calls related to projects
- */
+
 export const projectService = {
-  /**
-   * Get list of projects with pagination and filters
-   */
+
   async getList(params: ProjectListParams = {}): Promise<ProjectResponse> {
     try {
       const { page = 1, limit = 10 } = params;
 
       const response = await apiClient.post<{ data: ProjectResponse }>(
         `${apiConfig.endpoints.projectsList}?page=${page}&limit=${limit}`,
-        {} // Empty body as per the curl command
+        {} 
       );
 
       return response.data.data || response.data;
@@ -32,9 +27,7 @@ export const projectService = {
     }
   },
 
-  /**
-   * Get projects dropdown list
-   */
+
   async getDropdown(): Promise<{ projects: Project[] }> {
     try {
       const response = await apiClient.get<{ data: { projects: Project[] } }>(
@@ -47,9 +40,7 @@ export const projectService = {
     }
   },
 
-  /**
-   * Get project by ID
-   */
+
   async getById(id: string): Promise<Project> {
     try {
       const response = await apiClient.get<{ data: { project: Project } }>(
@@ -62,9 +53,7 @@ export const projectService = {
     }
   },
 
-  /**
-   * Create a new project
-   */
+
   async create(payload: CreateProjectPayload): Promise<Project> {
     try {
       const response = await apiClient.post<{ data: { project: Project } }>(
@@ -78,9 +67,7 @@ export const projectService = {
     }
   },
 
-  /**
-   * Update an existing project
-   */
+
   async update(id: string, payload: UpdateProjectPayload): Promise<Project> {
     try {
       const response = await apiClient.put<{ data: { project: Project } }>(
@@ -94,9 +81,7 @@ export const projectService = {
     }
   },
 
-  /**
-   * Delete a project
-   */
+
   async delete(id: string): Promise<void> {
     try {
       await apiClient.delete(apiConfig.endpoints.deleteProject(id));

@@ -1,12 +1,8 @@
 import { STORAGE_KEYS } from "@/constants";
 
-/**
- * Safe localStorage wrapper
- */
+
 export const storage = {
-  /**
-   * Get item from localStorage
-   */
+
   get: <T = string>(key: string): T | null => {
     if (typeof window === "undefined") return null;
     
@@ -14,7 +10,6 @@ export const storage = {
       const item = window.localStorage.getItem(key);
       if (!item || item.trim() === "") return null;
       
-      // Try to parse as JSON, fallback to string
       try {
         return JSON.parse(item) as T;
       } catch {
@@ -26,9 +21,7 @@ export const storage = {
     }
   },
 
-  /**
-   * Set item in localStorage
-   */
+
   set: (key: string, value: unknown): boolean => {
     if (typeof window === "undefined") return false;
     
@@ -44,9 +37,7 @@ export const storage = {
     }
   },
 
-  /**
-   * Remove item from localStorage
-   */
+
   remove: (key: string): boolean => {
     if (typeof window === "undefined") return false;
     
@@ -59,9 +50,7 @@ export const storage = {
     }
   },
 
-  /**
-   * Clear all localStorage
-   */
+
   clear: (): boolean => {
     if (typeof window === "undefined") return false;
     
@@ -75,9 +64,7 @@ export const storage = {
   },
 };
 
-/**
- * Auth-specific storage helpers
- */
+
 export const authStorage = {
   getToken: (): string | null => storage.get(STORAGE_KEYS.TOKEN),
   setToken: (token: string): boolean => storage.set(STORAGE_KEYS.TOKEN, token),

@@ -1,9 +1,7 @@
 import { useAuth } from '@/contexts/auth-context';
 
-// Re-export the useAuth hook for convenience
 export { useAuth } from '@/contexts/auth-context';
 
-// Additional auth-related hooks can be added here
 export function useRequireAuth() {
   const auth = useAuth();
   

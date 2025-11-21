@@ -1,8 +1,3 @@
-/**
- * Centralized Query Keys for React Query
- * Follow hierarchical structure for better cache management
- */
-
 export const queryKeys = {
   // Auth
   auth: {

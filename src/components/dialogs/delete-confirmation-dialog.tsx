@@ -1,4 +1,3 @@
-// src/components/delete-confirm-dialog.tsx
 'use client';
 
 import { Button } from '@/components/ui/button';

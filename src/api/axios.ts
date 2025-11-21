@@ -2,7 +2,6 @@ import axios, { AxiosHeaders } from "axios";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-// Create axios instance
 export const api = axios.create({
   baseURL: API_BASE_URL,
 });
@@ -27,7 +26,6 @@ function getTenantIdFromLocalStorage(): string | null {
   }
 }
 
-// Attach Authorization and X-Tenant-ID headers if present
 api.interceptors.request.use((config) => {
   const token = getTokenFromLocalStorage();
   const tenantId = getTenantIdFromLocalStorage();
@@ -44,15 +42,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Basic 401 handler - redirect to login on unauthorized
 api.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error?.response?.status === 401 && typeof window !== "undefined") {
-      // Clear token and user from localStorage
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      // Redirect to login if not already on login page
       if (!window.location.pathname.startsWith("/login")) {
         const next = encodeURIComponent(window.location.pathname + window.location.search);
         window.location.href = `/login?next=${next}`;

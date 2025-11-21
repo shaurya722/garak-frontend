@@ -1,4 +1,3 @@
-// src/components/job/JobDetail.tsx
 'use client';
 
 import { useRouter } from 'next/navigation';

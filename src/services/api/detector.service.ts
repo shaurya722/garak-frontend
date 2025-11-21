@@ -9,14 +9,9 @@ import {
 } from "@/types";
 import { handleApiError } from "@/lib/utils";
 
-/**
- * Detector Service
- * All API calls related to detectors
- */
+
 export const detectorService = {
-  /**
-   * Get list of detectors with pagination and filters
-   */
+
   async getList(params: DetectorListParams = {}): Promise<DetectorResponse> {
     try {
       const { page = 1, limit = 10, creationType } = params;
@@ -34,9 +29,7 @@ export const detectorService = {
     }
   },
 
-  /**
-   * Get detector by ID
-   */
+
   async getById(id: string): Promise<Detector> {
     try {
       const response = await apiClient.get<{ data: { detector: Detector } }>(
@@ -49,9 +42,7 @@ export const detectorService = {
     }
   },
 
-  /**
-   * Get available detector types
-   */
+
   async getTypes(): Promise<string[]> {
     try {
       const response = await apiClient.get<{ data: { detectorTypes: string[] } }>(
@@ -64,9 +55,7 @@ export const detectorService = {
     }
   },
 
-  /**
-   * Get built-in detectors
-   */
+
   async getBuiltin(params: DetectorListParams = {}): Promise<DetectorResponse> {
     try {
       const { page = 1, limit = 10 } = params;
@@ -82,9 +71,7 @@ export const detectorService = {
     }
   },
 
-  /**
-   * Create a new detector
-   */
+
   async create(payload: CreateDetectorPayload): Promise<Detector> {
     try {
       const response = await apiClient.post<{ data: Detector }>(
@@ -98,9 +85,7 @@ export const detectorService = {
     }
   },
 
-  /**
-   * Update an existing detector
-   */
+
   async update(id: string, payload: UpdateDetectorPayload): Promise<Detector> {
     try {
       const response = await apiClient.put<{ data: Detector }>(
@@ -114,9 +99,7 @@ export const detectorService = {
     }
   },
 
-  /**
-   * Delete a detector
-   */
+
   async delete(id: string): Promise<void> {
     try {
       await apiClient.delete(apiConfig.endpoints.deleteDetector(id));
@@ -125,9 +108,7 @@ export const detectorService = {
     }
   },
 
-  /**
-   * Test a detector (if endpoint exists)
-   */
+
   async test(id: string, testData: Record<string, unknown>): Promise<unknown> {
     try {
       const response = await apiClient.post(

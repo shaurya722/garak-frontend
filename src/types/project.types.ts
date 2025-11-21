@@ -31,7 +31,7 @@ export interface ProjectFormData {
   redModelToken?: string;
   redAuthorizationType?: string | null;
   redAuthorizationValue?: string | null;
-  redRequestTemplate?: string; // JSON string for form
+  redRequestTemplate?: string;
   agenticZipUrl?: string | null;
 }
 

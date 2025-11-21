@@ -11,10 +11,7 @@ interface PaginationProps {
   pageSizeOptions?: readonly number[]
 }
 
-/**
- * Pagination Component
- * Reusable pagination controls
- */
+
 export function Pagination({
   page,
   totalPages,
@@ -30,7 +27,6 @@ export function Pagination({
       </div>
 
       <div className='flex items-center space-x-6 lg:space-x-8'>
-        {/* Page Size Selector */}
         {pageSize && onPageSizeChange && (
           <div className='flex items-center space-x-2'>
             <p className='text-sm font-medium'>Rows per page</p>
@@ -38,7 +34,7 @@ export function Pagination({
               value={pageSize}
               onChange={(e) => {
                 onPageSizeChange(Number(e.target.value))
-                onPageChange(1) // Reset to first page
+                onPageChange(1) 
               }}
               className='h-8 w-[70px] rounded-md border border-input bg-background px-3 py-1 text-sm'
             >
@@ -51,7 +47,6 @@ export function Pagination({
           </div>
         )}
 
-        {/* Page Navigation */}
         <div className='flex items-center space-x-2'>
           <Button
             variant='outline'

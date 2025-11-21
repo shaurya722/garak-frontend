@@ -13,10 +13,6 @@ interface EmptyStateProps {
   className?: string;
 }
 
-/**
- * Empty State Component
- * Display when no data is available
- */
 export function EmptyState({
   icon: Icon,
   title,

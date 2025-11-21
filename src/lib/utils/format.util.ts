@@ -1,10 +1,3 @@
-/**
- * Format utilities for dates, numbers, etc.
- */
-
-/**
- * Format date to localized string
- */
 export function formatDate(
   date: string | Date,
   options?: Intl.DateTimeFormatOptions
@@ -22,9 +15,7 @@ export function formatDate(
   });
 }
 
-/**
- * Format date with time
- */
+
 export function formatDateTime(date: string | Date): string {
   const dateObj = typeof date === "string" ? new Date(date) : date;
   
@@ -41,24 +32,18 @@ export function formatDateTime(date: string | Date): string {
   });
 }
 
-/**
- * Format number as percentage
- */
+
 export function formatPercentage(value: number, decimals = 0): string {
   return `${(value * 100).toFixed(decimals)}%`;
 }
 
-/**
- * Truncate text with ellipsis
- */
+
 export function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return `${text.substring(0, maxLength)}...`;
 }
 
-/**
- * Format file size
- */
+
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 Bytes";
   
@@ -69,17 +54,13 @@ export function formatFileSize(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
-/**
- * Capitalize first letter
- */
+
 export function capitalize(text: string): string {
   if (!text) return text;
   return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
 }
 
-/**
- * Convert snake_case to Title Case
- */
+
 export function snakeToTitle(text: string): string {
   return text
     .split("_")

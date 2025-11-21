@@ -10,10 +10,7 @@ interface ErrorMessageProps {
   className?: string;
 }
 
-/**
- * Error Message Component
- * Display error states with retry option
- */
+
 export function ErrorMessage({
   title = "Error",
   message,

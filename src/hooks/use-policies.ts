@@ -1,4 +1,3 @@
-// src/hooks/use-policies.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { policyService, PolicyResponse } from '@/services/policy/policy.service';
 import { Policy } from '@/types/policies.type';
@@ -10,7 +9,7 @@ export const usePolicies = (params?: { page?: number; limit?: number }) => {
   return useQuery<PolicyResponse>({
     queryKey: ['policies', page, limit],
     queryFn: () => policyService.getPolicies({ page, limit }),
-    staleTime: 1000 * 60, // 10 seconds - data stays fresh for 10s
+    staleTime: 1000 * 60, // 10 seconds 
   });
 };
 
@@ -72,6 +71,6 @@ export const usePolicyDropdown = () => {
   return useQuery({
     queryKey: ['policy-dropdown'],
     queryFn: () => policyService.getPolicyDropdown(),
-    staleTime: 1000 * 60 * 5, // 5 minutes - dropdown data changes less frequently
+    staleTime: 1000 * 60 * 5, // 5 minutes 
   });
 };

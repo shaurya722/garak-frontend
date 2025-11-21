@@ -1,4 +1,3 @@
-// src/app/projects/[id]/page.tsx
 'use client';
 
 import { useProject } from '@/hooks/use-projects';

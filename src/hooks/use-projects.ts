@@ -23,7 +23,7 @@ export const useProjectsDropdown = () => {
   return useQuery<{ projects: Project[] }>({
     queryKey: queryKeys.projects.dropdown(),
     queryFn: () => projectService.getDropdown(),
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes since dropdown data changes less frequently
+    staleTime: 1000 * 60 * 5, 
   });
 };
 

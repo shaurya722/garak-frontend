@@ -1,8 +1,4 @@
-/**
- * Authentication utility functions
- */
 
-// Check if user is authenticated by looking for token in cookies
 export function isAuthenticated(): boolean {
   if (typeof document === 'undefined') return false;
   
@@ -10,7 +6,6 @@ export function isAuthenticated(): boolean {
   return !!match && match[1] !== '';
 }
 
-// Get token from cookies
 export function getAuthToken(): string | null {
   if (typeof document === 'undefined') return null;
   
@@ -18,14 +13,12 @@ export function getAuthToken(): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-// Remove authentication token
 export function clearAuthToken(): void {
   if (typeof document === 'undefined') return;
   
   document.cookie = 'token=; Path=/; Max-Age=0; SameSite=Lax';
 }
 
-// Set authentication token
 export function setAuthToken(token: string, rememberMe: boolean = false): void {
   if (typeof document === 'undefined') return;
   
@@ -33,7 +26,6 @@ export function setAuthToken(token: string, rememberMe: boolean = false): void {
   document.cookie = `token=${encodeURIComponent(token)}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
 }
 
-// Redirect to login with return URL
 export function redirectToLogin(returnUrl?: string): void {
   if (typeof window === 'undefined') return;
   
@@ -44,7 +36,6 @@ export function redirectToLogin(returnUrl?: string): void {
   window.location.href = url;
 }
 
-// Redirect to dashboard
 export function redirectToDashboard(): void {
   if (typeof window === 'undefined') return;
   

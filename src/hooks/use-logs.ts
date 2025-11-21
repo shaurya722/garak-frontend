@@ -1,4 +1,3 @@
-// src/hooks/use-logs.ts
 import { useQuery } from '@tanstack/react-query';
 import { logService } from '@/services/api';
 import { queryKeys } from '@/lib/react-query';

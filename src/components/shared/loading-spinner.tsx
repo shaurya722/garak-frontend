@@ -12,9 +12,6 @@ const sizeClasses = {
   lg: "h-12 w-12",
 };
 
-/**
- * Loading Spinner Component
- */
 export function LoadingSpinner({ size = "md", className }: LoadingSpinnerProps) {
   return (
     <Loader2 
@@ -27,9 +24,6 @@ export function LoadingSpinner({ size = "md", className }: LoadingSpinnerProps) 
   );
 }
 
-/**
- * Full Page Loading Spinner
- */
 export function PageLoader({ message = "Loading..." }: { message?: string }) {
   return (
     <div className="min-h-screen flex items-center justify-center">
@@ -41,9 +35,7 @@ export function PageLoader({ message = "Loading..." }: { message?: string }) {
   );
 }
 
-/**
- * Inline Loading Spinner with Text
- */
+
 export function InlineLoader({ message = "Loading..." }: { message?: string }) {
   return (
     <div className="flex items-center space-x-2">

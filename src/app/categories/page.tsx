@@ -1,4 +1,3 @@
-// src/app/categories/page.tsx
 'use client';
 
 import { CategoryList } from "@/components/category/CategoryList";

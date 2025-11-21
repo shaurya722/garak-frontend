@@ -15,10 +15,7 @@ interface State {
   error?: Error;
 }
 
-/**
- * Error Boundary Component
- * Catches JavaScript errors anywhere in the child component tree
- */
+
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -30,13 +27,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console in development
     if (process.env.NODE_ENV === "development") {
       console.error("Error caught by ErrorBoundary:", error, errorInfo);
     }
     
-    // You can also log to an error reporting service here
-    // errorReportingService.log(error, errorInfo);
   }
 
   handleReset = () => {

@@ -1,5 +1,3 @@
-// API Configuration
-// Centralized API endpoints for all services (Auth + Management via Nginx)
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost";
 

@@ -1,4 +1,3 @@
-// src/components/job/JobForm.tsx
 'use client';
 
 import { useEffect } from 'react';

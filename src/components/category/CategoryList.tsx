@@ -1,4 +1,3 @@
-// src/components/category/CategoryList.tsx
 'use client';
 
 import { useState } from 'react';

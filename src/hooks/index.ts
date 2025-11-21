@@ -1,4 +1,3 @@
-// Central export for all hooks
 export * from "./use-auth";
 export * from "./use-categories";
 export * from "./use-detectors";

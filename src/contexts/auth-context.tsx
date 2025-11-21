@@ -58,23 +58,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const isAuthenticated = !!user
 
-  // Check auth status on mount - simple token check
   useEffect(() => {
     const checkAuth = () => {
       try {
         const token = localStorage.getItem('token')
 
         if (token) {
-          // Token exists, create a minimal user object
-          // You can decode the JWT token here if needed to get user info
           setUser({
             id: '1',
-            email: 'user@example.com', // Replace with actual user data from token if available
+            email: 'user@example.com', 
           })
         }
       } catch (error) {
         console.error('Auth check failed:', error)
-        // Clear invalid data
         localStorage.removeItem('token')
         setUser(null)
       } finally {
@@ -85,7 +81,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     checkAuth()
   }, [])
 
-  // Login function
   const login = async (credentials: LoginCredentials) => {
     try {
       setIsLoading(true)
@@ -104,7 +99,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw new Error('No access token received')
       }
 
-      // Create user object from response
       const userData: User = {
         id: response.data.data?.id || response.data.id || '1',
         email: credentials.email,
@@ -132,9 +126,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  // Logout function
   const logout = () => {
-    // Clear localStorage
     localStorage.removeItem('token')
     setUser(null)
     router.push('/login')

@@ -9,12 +9,8 @@ interface QueryProviderProps {
   children: React.ReactNode;
 }
 
-/**
- * React Query Provider Component
- * Wraps the app with QueryClientProvider
- */
+
 export function QueryProvider({ children }: QueryProviderProps) {
-  // Use state to ensure we only create the client once per component mount
   const [queryClient] = useState(() => getQueryClient());
 
   return (

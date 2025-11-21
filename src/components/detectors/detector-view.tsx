@@ -1,4 +1,3 @@
-// src/components/detectors/detector-view.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
