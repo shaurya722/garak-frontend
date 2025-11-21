@@ -5,3 +5,5 @@ export * from "./use-detectors";
 export * from "./use-policies";
 export * from "./use-projects";
 export * from "./use-probes";
+export * from "./use-jobs";
+export * from "./use-logs";

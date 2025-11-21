@@ -46,6 +46,26 @@ export const queryKeys = {
     lists: () => [...queryKeys.projects.all, "list"] as const,
     list: (filters: Record<string, unknown>) => 
       [...queryKeys.projects.lists(), filters] as const,
+    dropdown: () => [...queryKeys.projects.all, "dropdown"] as const,
     detail: (id: string) => [...queryKeys.projects.all, "detail", id] as const,
+  },
+
+  // Jobs
+  jobs: {
+    all: ["jobs"] as const,
+    lists: () => [...queryKeys.jobs.all, "list"] as const,
+    list: (filters: Record<string, unknown>) => 
+      [...queryKeys.jobs.lists(), filters] as const,
+    detail: (id: string) => [...queryKeys.jobs.all, "detail", id] as const,
+  },
+
+  // Logs
+  logs: {
+    all: ["logs"] as const,
+    lists: () => [...queryKeys.logs.all, "list"] as const,
+    list: (filters: Record<string, unknown>) => 
+      [...queryKeys.logs.lists(), filters] as const,
+    jobLogs: (jobId: string, filters: Record<string, unknown>) =>
+      [...queryKeys.logs.all, "job", jobId, filters] as const,
   },
 } as const;

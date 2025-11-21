@@ -12,12 +12,18 @@ import {
 import { toast } from 'sonner';
 
 export const useProjects = (params: ProjectListParams = {}) => {
-  const { page = 1, limit = 10 } = params;
-
   return useQuery<ProjectResponse>({
     queryKey: queryKeys.projects.list(params as Record<string, unknown>),
     queryFn: () => projectService.getList(params),
     staleTime: 1000 * 60,
+  });
+};
+
+export const useProjectsDropdown = () => {
+  return useQuery<{ projects: Project[] }>({
+    queryKey: queryKeys.projects.dropdown(),
+    queryFn: () => projectService.getDropdown(),
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes since dropdown data changes less frequently
   });
 };
 

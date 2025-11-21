@@ -61,8 +61,18 @@ const navigation = [
     icon: Shield,
   },
   {
-    name: 'Scan',
-    href: '/tests',
+    name: 'Job',
+    href: '/jobs',
+    icon: Activity,
+  },
+  {
+    name: 'Logs',
+    href: '/logs',
+    icon: FileText,
+  },
+  {
+    name: 'Playground',
+    href: '/playground',
     icon: Activity,
   },
   // {

@@ -30,6 +30,7 @@ export const apiConfig = {
 
     // Projects
     projectsList: `${API_BASE_URL}/management/company/project/list`,
+    projectsDropdown: `${API_BASE_URL}/management/company/project/dropdown`,
     projectsCreate: `${API_BASE_URL}/management/company/project/create`,
     getProject: (id: string) => `${API_BASE_URL}/management/company/project/${id}`,
     updateProject: (id: string) => `${API_BASE_URL}/management/company/project/${id}`,
@@ -53,10 +54,15 @@ export const apiConfig = {
     detectorsTest: `${API_BASE_URL}/api/detectors/test`,
 
     // Jobs
-    runGarak: `${API_BASE_URL}/api/run-garak/`,
-    jobs: `${API_BASE_URL}/api/jobs`,
-    jobsActive: `${API_BASE_URL}/api/jobs/active/`,
-    jobsCleanup: `${API_BASE_URL}/api/jobs/cleanup-orphaned/`,
+    jobsList: `${API_BASE_URL}/management/company/job/list`,
+    jobsCreate: `${API_BASE_URL}/management/company/job/create`,
+    getJob: (id: string) => `${API_BASE_URL}/management/company/job/${id}`,
+    updateJob: (id: string) => `${API_BASE_URL}/management/company/job/${id}`,
+    deleteJob: (id: string) => `${API_BASE_URL}/management/company/job/${id}`,
+
+    // Logs
+    logsList: `${API_BASE_URL}/management/company/log/list`,
+    logsJob: (jobId: string) => `${API_BASE_URL}/management/company/log/job/${jobId}`,
 
     // Agentic Radar Service
     agenticRadarFrameworks: `${API_BASE_URL}/api/api/v1/frameworks`,
@@ -72,14 +78,6 @@ export const apiConfig = {
 } as const;
 
 // === Helper Functions ===
-export const getJobUrl = (jobId: string) => `${API_BASE_URL}/api/job/${jobId}`;
-export const getJobStatusUrl = (jobId: string) => `${API_BASE_URL}/api/job/${jobId}/status/`;
-export const getJobResultsUrl = (jobId: string) => `${API_BASE_URL}/api/job/${jobId}/results/`;
-export const getJobEnhancedUrl = (jobId: string) => `${API_BASE_URL}/api/job/${jobId}/enhanced/`;
-export const getJobCiMetricsUrl = (jobId: string) => `${API_BASE_URL}/api/job/${jobId}/ci-metrics/`;
-export const getPolicyUrl = (policyId: string) => `${API_BASE_URL}/api/policies/${policyId}`;
-export const getEnhancedPolicyUrl = (policyId: string) => `${API_BASE_URL}/api/policies/enhanced/${policyId}`;
-export const getRestConfigUrl = (configId: string) => `${API_BASE_URL}/api/rest-configs/${configId}`;
-export const getDetectorUrl = (detectorId: string) => `${API_BASE_URL}/api/detectors/${detectorId}`;
+export const getJobUrl = (jobId: string) => `${API_BASE_URL}/management/company/job/${jobId}`;
 
 export default apiConfig;

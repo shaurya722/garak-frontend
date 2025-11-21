@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useDetectors } from "@/hooks/use-detectors";
 import { useCreatePolicy, useUpdatePolicy } from "@/hooks/use-policies";
 import { useCategories, useDeleteCategory } from "@/hooks/use-categories";
-import { ChevronDown, ChevronRight, Eye, Edit, Trash2, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Eye, Edit, Trash2, X, EyeOff, Code, Users, Ban, AlertTriangle, Terminal, Zap, Globe, Target, Search, Lock, Heart, Hash, AlertCircle } from 'lucide-react';
 import { PolicyFormProps, PolicyCreateData, PolicyUpdateData } from "@/types/policies.type";
 import { DeleteConfirmDialog } from '@/components/dialogs/delete-confirmation-dialog';
 import { toast } from 'sonner';
@@ -32,9 +32,9 @@ const policyFormSchema = z.object({
   // Anonymize scanner
   anonymize: z.coerce.boolean().optional(),
   anonymizeType: z.array(z.string()).optional(),
-  anonymizeHiddenNames: z.string().optional(),
-  anonymizeAllowedNames: z.string().optional(),
-  anonymizePreamble: z.string().optional(),
+  anonymizeHiddenNames: z.array(z.string()).optional(),
+  anonymizeAllowedNames: z.array(z.string()).optional(),
+  anonymizePreamble: z.string().nullable().optional().transform(val => val === null ? undefined : val),
   anonymizeUseFaker: z.coerce.boolean().optional(),
   anonymizeThreshold: z.coerce.number().min(0).max(1).optional(),
   // BanCode scanner
@@ -43,53 +43,54 @@ const policyFormSchema = z.object({
   // BanCompetitors scanner
   banCompetitors: z.coerce.boolean().optional(),
   banCompetitorsThreshold: z.coerce.number().min(0).max(1).optional(),
-  banCompetitorsCompetitors: z.string().optional(),
+  banCompetitorsCompetitors: z.array(z.string()).optional(),
   // BanSubstrings scanner
   banSubstrings: z.coerce.boolean().optional(),
-  banSubstringsSubstrings: z.string().optional(),
-  banSubstringsMatchType: z.string().nullable().optional(),
+  banSubstringsSubstrings: z.array(z.string()).optional(),
+  banSubstringsMatchType: z.string().nullable().optional().transform(val => val === null ? undefined : val),
   banSubstringsCaseSensitive: z.coerce.boolean().optional(),
   banSubstringsRedact: z.coerce.boolean().optional(),
   banSubstringsContainsAll: z.coerce.boolean().optional(),
   // BanTopics scanner
   banTopics: z.coerce.boolean().optional(),
   banTopicsThreshold: z.coerce.number().min(0).max(1).optional(),
-  banTopicsTopics: z.string().optional(),
+  banTopicsTopics: z.array(z.string()).optional(),
   // Code scanner
   code: z.coerce.boolean().optional(),
-  codeLanguages: z.string().optional(),
+  codeLanguages: z.array(z.string()).optional(),
   codeIsBlocked: z.coerce.boolean().optional(),
   // Gibberish scanner
   gibberish: z.coerce.boolean().optional(),
   gibberishThreshold: z.coerce.number().min(0).max(1).optional(),
-  gibberishMatchType: z.string().nullable().optional(),
+  gibberishMatchType: z.string().nullable().optional().transform(val => val === null ? undefined : val),
   // Language scanner
   language: z.coerce.boolean().optional(),
-  languageValidLanguages: z.string().optional(),
-  languageMatchType: z.string().nullable().optional(),
+  languageValidLanguages: z.array(z.string()).optional(),
+  languageMatchType: z.string().nullable().optional().transform(val => val === null ? undefined : val),
   // PromptInjection scanner
   promptInjection: z.coerce.boolean().optional(),
   promptInjectionThreshold: z.coerce.number().min(0).max(1).optional(),
-  promptInjectionMatchType: z.string().nullable().optional(),
+  promptInjectionMatchType: z.string().nullable().optional().transform(val => val === null ? undefined : val),
   // Regex scanner
   regex: z.coerce.boolean().optional(),
-  regexPatterns: z.string().optional(),
+  regexPatterns: z.array(z.string()).optional(),
   regexIsBlocked: z.coerce.boolean().optional(),
   regexRedact: z.coerce.boolean().optional(),
   // Secrets scanner
   secrets: z.coerce.boolean().optional(),
-  secretsRedactMode: z.string().nullable().optional(),
+  secretsRedactMode: z.string().nullable().optional().transform(val => val === null ? undefined : val),
   // Sentiment scanner
   sentiment: z.coerce.boolean().optional(),
   sentimentThreshold: z.coerce.number().min(-1).max(1).optional(),
-  sentimentMatchType: z.string().nullable().optional(),
+  sentimentMatchType: z.string().nullable().optional().transform(val => val === null ? undefined : val),
   // TokenLimit scanner
   tokenLimit: z.coerce.boolean().optional(),
   tokenLimitLimit: z.coerce.number().optional(),
-  tokenLimitEncodingName: z.string().nullable().optional(),
+  tokenLimitEncodingName: z.string().nullable().optional().transform(val => val === null ? undefined : val),
   // Toxicity scanner
   toxicity: z.coerce.boolean().optional(),
   toxicityThreshold: z.coerce.number().min(0).max(1).optional(),
+  toxicityMatchType: z.string().nullable().optional().transform(val => val === null ? undefined : val),
 }).superRefine((data, ctx) => {
   // Custom validation for BLUE policies
   if (data.type === "BLUE") {
@@ -317,7 +318,7 @@ export function PolicyForm({
   ];
 
   const form = useForm<PolicyFormValues>({
-    resolver: zodResolver(policyFormSchema as any),
+    resolver: zodResolver(policyFormSchema as any), // eslint-disable-line @typescript-eslint/no-explicit-any
     defaultValues: {
       name: "",
       description: "",
@@ -325,20 +326,34 @@ export function PolicyForm({
       defaultDetector: false,
       categoryIds: null,
       detectorIds: null,
-      // enabledScanners is only for BLUE policies
-      ...initialData,
+      // BLUE policy specific fields - all scanners
+      anonymizeType: ["CREDIT_CARD", "CRYPTO","EMAIL_ADDRESS","IBAN_CODE","IP_ADDRESS","PERSON","PHONE_NUMBER","US_SSN","US_BANK_NUMBER","CREDIT_CARD_RE","UUID","EMAIL_ADDRESS_RE","US_SSN_RE"],
+      anonymizeHiddenNames: [],
+      anonymizeAllowedNames: [],
+      banCompetitorsCompetitors: ["openai", "anthropic"],
+      banSubstringsSubstrings: [],
+      banTopicsTopics: ["Religion", "politics"],
+      codeLanguages: [],
+      languageValidLanguages: [],
+      regexPatterns: [],
+      ...Object.fromEntries(
+        Object.entries(initialData || {}).map(([key, value]) => [
+          key,
+          value === null ? undefined : value
+        ])
+      ),
       // Convert arrays to comma-separated strings for BLUE fields
       ...(initialData?.type === "BLUE" && {
-        anonymizeHiddenNames: Array.isArray(initialData.anonymizeHiddenNames) ? initialData.anonymizeHiddenNames.join(',') : initialData.anonymizeHiddenNames,
-        anonymizeAllowedNames: Array.isArray(initialData.anonymizeAllowedNames) ? initialData.anonymizeAllowedNames.join(',') : initialData.anonymizeAllowedNames,
-        banCompetitorsCompetitors: Array.isArray(initialData.banCompetitorsCompetitors) ? initialData.banCompetitorsCompetitors.join(',') : initialData.banCompetitorsCompetitors,
-        banSubstringsSubstrings: Array.isArray(initialData.banSubstringsSubstrings) ? initialData.banSubstringsSubstrings.join(',') : initialData.banSubstringsSubstrings,
-        banTopicsTopics: Array.isArray(initialData.banTopicsTopics) ? initialData.banTopicsTopics.join(',') : initialData.banTopicsTopics,
-        codeLanguages: Array.isArray(initialData.codeLanguages) ? initialData.codeLanguages.join(',') : initialData.codeLanguages,
-        languageValidLanguages: Array.isArray(initialData.languageValidLanguages) ? initialData.languageValidLanguages.join(',') : initialData.languageValidLanguages,
-        regexPatterns: Array.isArray(initialData.regexPatterns) ? initialData.regexPatterns.join(',') : initialData.regexPatterns,
+        anonymizeHiddenNames: initialData.anonymizeHiddenNames,
+        anonymizeAllowedNames: initialData.anonymizeAllowedNames,
+        banCompetitorsCompetitors: initialData.banCompetitorsCompetitors,
+        banSubstringsSubstrings: initialData.banSubstringsSubstrings,
+        banTopicsTopics: initialData.banTopicsTopics,
+        codeLanguages: initialData.codeLanguages,
+        languageValidLanguages: initialData.languageValidLanguages,
+        regexPatterns: initialData.regexPatterns,
       }),
-    },
+    } as Partial<PolicyFormValues>,
   });
 
   const {
@@ -353,16 +368,32 @@ export function PolicyForm({
   const selectedType = watch("type");
 
   const onSubmit = (data: PolicyFormValues) => {
-    const { enabledScanners: enabledScannersField, ...dataWithoutEnabledScanners } = data;
+    // Transform null values to undefined before processing
+    const cleanedData = Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [
+        key,
+        value === null ? undefined : value
+      ])
+    ) as PolicyFormValues;
+
+    const { enabledScanners: enabledScannersField, ...dataWithoutEnabledScanners } = cleanedData;
     console.log('Form submitted with data:', data);
     console.log('Enabled scanners state:', enabledScanners);
     const baseData = {
-      ...dataWithoutEnabledScanners,
-      defaultDetector: data.defaultDetector ?? false,
+      ...(Object.fromEntries(
+        Object.entries(dataWithoutEnabledScanners).filter(([key, value]) => {
+          // Filter out empty arrays for required array fields
+          if (key === 'anonymizeType' && Array.isArray(value) && value.length === 0) {
+            return false;
+          }
+          return true;
+        })
+      ) as Partial<PolicyFormValues>),
+      defaultDetector: cleanedData.defaultDetector ?? false,
     };
 
     // Add BLUE-specific fields
-    const blueData = data.type === "BLUE" ? {
+    const blueData = cleanedData.type === "BLUE" ? {
       // Only include basic fields for BLUE policies
       name: baseData.name,
       description: baseData.description,
@@ -386,36 +417,40 @@ export function PolicyForm({
       ...(baseData.tokenLimit !== undefined && { tokenLimit: baseData.tokenLimit }),
       ...(baseData.toxicity !== undefined && { toxicity: baseData.toxicity }),
       // Convert string fields to arrays for BLUE policies, only include if not empty
-      ...(data.anonymizeHiddenNames && data.anonymizeHiddenNames.trim() && {
-        anonymizeHiddenNames: data.anonymizeHiddenNames.split(',').map(s => s.trim()).filter(Boolean)
+      ...(Array.isArray(cleanedData.anonymizeHiddenNames) && cleanedData.anonymizeHiddenNames.length > 0 && {
+        anonymizeHiddenNames: cleanedData.anonymizeHiddenNames
       }),
-      ...(data.anonymizeAllowedNames && data.anonymizeAllowedNames.trim() && {
-        anonymizeAllowedNames: data.anonymizeAllowedNames.split(',').map(s => s.trim()).filter(Boolean)
+      ...(Array.isArray(cleanedData.anonymizeAllowedNames) && cleanedData.anonymizeAllowedNames.length > 0 && {
+        anonymizeAllowedNames: cleanedData.anonymizeAllowedNames
       }),
-      ...(data.anonymizePreamble && data.anonymizePreamble.trim() && {
-        anonymizePreamble: data.anonymizePreamble.trim()
+      ...(cleanedData.anonymizePreamble && cleanedData.anonymizePreamble.trim() && {
+        anonymizePreamble: cleanedData.anonymizePreamble.trim()
       }),
-      ...(data.banCompetitorsCompetitors && data.banCompetitorsCompetitors.trim() && {
-        banCompetitorsCompetitors: data.banCompetitorsCompetitors.split(',').map(s => s.trim()).filter(Boolean)
+      // Only include anonymizeType if it has at least one item
+      ...(Array.isArray(cleanedData.anonymizeType) && cleanedData.anonymizeType.length > 0 && {
+        anonymizeType: cleanedData.anonymizeType
       }),
-      ...(data.banSubstringsSubstrings && data.banSubstringsSubstrings.trim() && {
-        banSubstringsSubstrings: data.banSubstringsSubstrings.split(',').map(s => s.trim()).filter(Boolean)
+      ...(Array.isArray(cleanedData.banCompetitorsCompetitors) && cleanedData.banCompetitorsCompetitors.length > 0 && {
+        banCompetitorsCompetitors: cleanedData.banCompetitorsCompetitors
       }),
-      ...(data.banTopicsTopics && data.banTopicsTopics.trim() && {
-        banTopicsTopics: data.banTopicsTopics.split(',').map(s => s.trim()).filter(Boolean)
+      ...(Array.isArray(cleanedData.banSubstringsSubstrings) && cleanedData.banSubstringsSubstrings.length > 0 && {
+        banSubstringsSubstrings: cleanedData.banSubstringsSubstrings
       }),
-      ...(data.codeLanguages && data.codeLanguages.trim() && {
-        codeLanguages: data.codeLanguages.split(',').map(s => s.trim()).filter(Boolean)
+      ...(Array.isArray(cleanedData.banTopicsTopics) && cleanedData.banTopicsTopics.length > 0 && {
+        banTopicsTopics: cleanedData.banTopicsTopics
       }),
-      ...(data.languageValidLanguages && data.languageValidLanguages.trim() && {
-        languageValidLanguages: data.languageValidLanguages.split(',').map(s => s.trim()).filter(Boolean)
+      ...(Array.isArray(cleanedData.codeLanguages) && cleanedData.codeLanguages.length > 0 && {
+        codeLanguages: cleanedData.codeLanguages
       }),
-      ...(data.regexPatterns && data.regexPatterns.trim() && {
-        regexPatterns: data.regexPatterns.split(',').map(s => s.trim()).filter(Boolean)
+      ...(Array.isArray(cleanedData.languageValidLanguages) && cleanedData.languageValidLanguages.length > 0 && {
+        languageValidLanguages: cleanedData.languageValidLanguages
+      }),
+      ...(Array.isArray(cleanedData.regexPatterns) && cleanedData.regexPatterns.length > 0 && {
+        regexPatterns: cleanedData.regexPatterns
       }),
       // Set defaults for required fields
-      sentimentMatchType: (data.sentimentMatchType && data.sentimentMatchType.trim()) || 'sentiment',
-      tokenLimitLimit: data.tokenLimitLimit || 4096,
+      sentimentMatchType: (cleanedData.sentimentMatchType && cleanedData.sentimentMatchType.trim()) || 'sentiment',
+      tokenLimitLimit: cleanedData.tokenLimitLimit || 4096,
       // Include other fields that are not strings
       ...(baseData.anonymizeType && { anonymizeType: baseData.anonymizeType }),
       ...(baseData.anonymizeUseFaker !== undefined && { anonymizeUseFaker: baseData.anonymizeUseFaker }),
@@ -450,14 +485,14 @@ export function PolicyForm({
 
     if (isEditMode && policyId) {
       updateMutation(
-        { id: policyId, ...updateData } as any,
+        { id: policyId, ...updateData } as { id: string } & PolicyUpdateData,
         { onSuccess: () => {
           router.push(`/policies`);
           onSuccess?.();
         } }
       );
     } else {
-      createMutation(processedData as any, { onSuccess: () => {
+      createMutation(processedData as PolicyCreateData, { onSuccess: () => {
         router.push(`/policies`);
         onSuccess?.();
       } });
@@ -928,10 +963,10 @@ export function PolicyForm({
                         onCheckedChange={(checked) => {
                           if (checked) {
                             setEnabledScanners([...enabledScanners, scanner]);
-                            setValue(fieldName as any, true);
+                            setValue(fieldName as keyof typeof policyFormSchema.shape, true);
                           } else {
                             setEnabledScanners(enabledScanners.filter(s => s !== scanner));
-                            setValue(fieldName as any, false);
+                            setValue(fieldName as keyof typeof policyFormSchema.shape, false);
                           }
                         }}
                       />
@@ -955,8 +990,10 @@ export function PolicyForm({
           <div className="space-y-4">
             {enabledScanners.includes("Anonymize") && (
               <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
-                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors flex items-center gap-3">
+                  <EyeOff className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                   <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Anonymize</h4>
+                  <ChevronDown className="w-4 h-4 ml-auto text-gray-500 dark:text-gray-400 details-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="p-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -986,8 +1023,8 @@ export function PolicyForm({
                         control={control}
                         render={({ field }) => (
                           <TagInput
-                            value={typeof field.value === 'string' ? field.value.split(',').map(s => s.trim()).filter(Boolean) : (field.value || [])}
-                            onChange={(value) => field.onChange(value.join(','))}
+                            value={field.value || []}
+                            onChange={field.onChange}
                             placeholder="Add hidden name"
                             className="mt-1"
                           />
@@ -1001,8 +1038,8 @@ export function PolicyForm({
                         control={control}
                         render={({ field }) => (
                           <TagInput
-                            value={typeof field.value === 'string' ? field.value.split(',').map(s => s.trim()).filter(Boolean) : (field.value || [])}
-                            onChange={(value) => field.onChange(value.join(','))}
+                            value={field.value || []}
+                            onChange={field.onChange}
                             placeholder="Add allowed name"
                             className="mt-1"
                           />
@@ -1022,15 +1059,24 @@ export function PolicyForm({
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Use Faker</label>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
-                      <Input
-                        type="range"
-                        step="0.01"
-                        min="0"
-                        max="1"
-                        {...register("anonymizeThreshold")}
-                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
-                      />
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-neutral-700 px-2 py-1 rounded">
+                          {watch("anonymizeThreshold") || "0.5"}
+                        </span>
+                      </div>
+                      <div className="relative mt-1">
+                        <Input
+                          type="range"
+                          step="0.01"
+                          min="0"
+                          max="1"
+                          defaultValue="0.5"
+                          {...register("anonymizeThreshold")}
+                          className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                          title={`Current value: ${watch("anonymizeThreshold") || "0.5"}`}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1040,8 +1086,10 @@ export function PolicyForm({
             {/* Ban Code Scanner */}
             {enabledScanners.includes("BanCode") && (
               <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
-                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors flex items-center gap-3">
+                  <Code className="w-5 h-5 text-green-600 dark:text-green-400" />
                   <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Ban Code</h4>
+                  <ChevronDown className="w-4 h-4 ml-auto text-gray-500 dark:text-gray-400 details-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="p-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1050,15 +1098,23 @@ export function PolicyForm({
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Ban Code</label>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
-                      <Input
-                        type="range"
-                        step="0.01"
-                        min="0"
-                        max="1"
-                        {...register("banCodeThreshold")}
-                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
-                      />
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-neutral-700 px-2 py-1 rounded">
+                          {watch("banCodeThreshold") || "0.5"}
+                        </span>
+                      </div>
+                      <div className="relative mt-1">
+                        <Input
+                          type="range"
+                          step="0.01"
+                          min="0"
+                          max="1"
+                          {...register("banCodeThreshold")}
+                          className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                          title={`Current value: ${watch("banCodeThreshold") || "0.5"}`}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1068,8 +1124,10 @@ export function PolicyForm({
             {/* Ban Competitors Scanner */}
             {enabledScanners.includes("BanCompetitors") && (
               <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
-                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                <summary className="cursor-pointer p-4 bg-gray-50 rounded-lg dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors flex items-center gap-3">
+                  <Users className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                   <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Ban Competitors</h4>
+                  <ChevronDown className="w-4 h-4 ml-auto text-gray-500 dark:text-gray-400 details-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="p-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1078,15 +1136,23 @@ export function PolicyForm({
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Ban Competitors</label>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
-                      <Input
-                        type="range"
-                        step="0.01"
-                        min="0"
-                        max="1"
-                        {...register("banCompetitorsThreshold")}
-                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
-                      />
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-neutral-700 px-2 py-1 rounded">
+                          {watch("banCompetitorsThreshold") || "0.5"}
+                        </span>
+                      </div>
+                      <div className="relative mt-1">
+                        <Input
+                          type="range"
+                          step="0.01"
+                          min="0"
+                          max="1"
+                          {...register("banCompetitorsThreshold")}
+                          className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                          title={`Current value: ${watch("banCompetitorsThreshold") || "0.5"}`}
+                        />
+                      </div>
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Competitors</label>
@@ -1095,8 +1161,8 @@ export function PolicyForm({
                         control={control}
                         render={({ field }) => (
                           <TagInput
-                            value={typeof field.value === 'string' ? field.value.split(',').map(s => s.trim()).filter(Boolean) : (field.value || [])}
-                            onChange={(value) => field.onChange(value.join(','))}
+                            value={field.value || []}
+                            onChange={field.onChange}
                             placeholder="Add competitor name"
                             className="mt-1"
                           />
@@ -1111,8 +1177,10 @@ export function PolicyForm({
             {/* Ban Substrings Scanner */}
             {enabledScanners.includes("BanSubstrings") && (
               <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
-                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                <summary className="cursor-pointer p-4 bg-gray-50 rounded-lg dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors flex items-center gap-3">
+                  <Ban className="w-5 h-5 text-red-600 dark:text-red-400" />
                   <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Ban Substrings</h4>
+                  <ChevronDown className="w-4 h-4 ml-auto text-gray-500 dark:text-gray-400 details-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="p-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1157,8 +1225,8 @@ export function PolicyForm({
                         control={control}
                         render={({ field }) => (
                           <TagInput
-                            value={typeof field.value === 'string' ? field.value.split(',').map(s => s.trim()).filter(Boolean) : (field.value || [])}
-                            onChange={(value) => field.onChange(value.join(','))}
+                            value={field.value || []}
+                            onChange={field.onChange}
                             placeholder="Add substring to ban"
                             className="mt-1"
                           />
@@ -1173,8 +1241,10 @@ export function PolicyForm({
             {/* Ban Topics Scanner */}
             {enabledScanners.includes("BanTopics") && (
               <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
-                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                <summary className="cursor-pointer p-4 rounded-lg bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors flex items-center gap-3">
+                  <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
                   <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Ban Topics</h4>
+                  <ChevronDown className="w-4 h-4 ml-auto text-gray-500 dark:text-gray-400 details-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="p-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1183,15 +1253,23 @@ export function PolicyForm({
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Ban Topics</label>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
-                      <Input
-                        type="range"
-                        step="0.01"
-                        min="0"
-                        max="1"
-                        {...register("banTopicsThreshold")}
-                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
-                      />
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-neutral-700 px-2 py-1 rounded">
+                          {watch("banTopicsThreshold") || "0.5"}
+                        </span>
+                      </div>
+                      <div className="relative mt-1">
+                        <Input
+                          type="range"
+                          step="0.01"
+                          min="0"
+                          max="1"
+                          {...register("banTopicsThreshold")}
+                          className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                          title={`Current value: ${watch("banTopicsThreshold") || "0.5"}`}
+                        />
+                      </div>
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Topics</label>
@@ -1200,8 +1278,8 @@ export function PolicyForm({
                         control={control}
                         render={({ field }) => (
                           <TagInput
-                            value={typeof field.value === 'string' ? field.value.split(',').map(s => s.trim()).filter(Boolean) : (field.value || [])}
-                            onChange={(value) => field.onChange(value.join(','))}
+                            value={field.value || []}
+                            onChange={field.onChange}
                             placeholder="Add topic to ban"
                             className="mt-1"
                           />
@@ -1216,8 +1294,10 @@ export function PolicyForm({
             {/* Code Scanner */}
             {enabledScanners.includes("Code") && (
               <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
-                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                <summary className="cursor-pointer p-4  bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors rounded-lg flex items-center gap-3">
+                  <Terminal className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Code Detection</h4>
+                  <ChevronDown className="w-4 h-4 ml-auto text-gray-500 dark:text-gray-400 details-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="p-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1231,17 +1311,14 @@ export function PolicyForm({
                         name="codeLanguages"
                         control={control}
                         render={({ field }) => {
-                          const selectedLanguages = typeof field.value === 'string' 
-                            ? field.value.split(',').map(s => s.trim()).filter(Boolean) 
-                            : (field.value || []);
+                          const selectedLanguages = field.value || [];
                           
                           return (
                             <div className="mt-1">
                               <Select 
                                 onValueChange={(value) => {
                                   if (!selectedLanguages.includes(value)) {
-                                    const newValue = [...selectedLanguages, value].join(',');
-                                    field.onChange(newValue);
+                                    field.onChange([...selectedLanguages, value]);
                                   }
                                 }}
                               >
@@ -1273,8 +1350,7 @@ export function PolicyForm({
                                       <button
                                         type="button"
                                         onClick={() => {
-                                          const newValue = selectedLanguages.filter(l => l !== lang).join(',');
-                                          field.onChange(newValue);
+                                          field.onChange(selectedLanguages.filter(l => l !== lang));
                                         }}
                                         className="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-100"
                                       >
@@ -1301,8 +1377,10 @@ export function PolicyForm({
             {/* Gibberish Scanner */}
             {enabledScanners.includes("Gibberish") && (
               <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
-                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                <summary className="cursor-pointer rounded-lg p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors flex items-center gap-3">
+                  <Zap className="w-5 h-5 text-pink-600 dark:text-pink-400" />
                   <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Gibberish</h4>
+                  <ChevronDown className="w-4 h-4 ml-auto text-gray-500 dark:text-gray-400 details-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="p-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1311,15 +1389,23 @@ export function PolicyForm({
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Gibberish</label>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
-                      <Input
-                        type="range"
-                        step="0.01"
-                        min="0"
-                        max="1"
-                        {...register("gibberishThreshold")}
-                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
-                      />
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-neutral-700 px-2 py-1 rounded">
+                          {watch("gibberishThreshold") || "0.5"}
+                        </span>
+                      </div>
+                      <div className="relative mt-1">
+                        <Input
+                          type="range"
+                          step="0.01"
+                          min="0"
+                          max="1"
+                          {...register("gibberishThreshold")}
+                          className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                          title={`Current value: ${watch("gibberishThreshold") || "0.5"}`}
+                        />
+                      </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Match Type</label>
@@ -1347,8 +1433,10 @@ export function PolicyForm({
             {/* Language Scanner */}
             {enabledScanners.includes("Language") && (
               <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
-                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                <summary className="cursor-pointer rounded-lg p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors flex items-center gap-3">
+                  <Globe className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
                   <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Language</h4>
+                  <ChevronDown className="w-4 h-4 ml-auto text-gray-500 dark:text-gray-400 details-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="p-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1362,17 +1450,14 @@ export function PolicyForm({
                         name="languageValidLanguages"
                         control={control}
                         render={({ field }) => {
-                          const selectedLanguages = typeof field.value === 'string' 
-                            ? field.value.split(',').map(s => s.trim()).filter(Boolean) 
-                            : (field.value || []);
+                          const selectedLanguages = field.value || [];
                           
                           return (
                             <div className="mt-1">
                               <Select 
                                 onValueChange={(value) => {
                                   if (!selectedLanguages.includes(value)) {
-                                    const newValue = [...selectedLanguages, value].join(',');
-                                    field.onChange(newValue);
+                                    field.onChange([...selectedLanguages, value]);
                                   }
                                 }}
                               >
@@ -1404,8 +1489,7 @@ export function PolicyForm({
                                       <button
                                         type="button"
                                         onClick={() => {
-                                          const newValue = selectedLanguages.filter(l => l !== lang).join(',');
-                                          field.onChange(newValue);
+                                          field.onChange(selectedLanguages.filter(l => l !== lang));
                                         }}
                                         className="ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-100"
                                       >
@@ -1446,8 +1530,10 @@ export function PolicyForm({
             {/* Prompt Injection Scanner */}
             {enabledScanners.includes("PromptInjection") && (
               <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
-                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                <summary className="cursor-pointer rounded-lg p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors flex items-center gap-3">
+                  <Target className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                   <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Prompt Injection</h4>
+                  <ChevronDown className="w-4 h-4 ml-auto text-gray-500 dark:text-gray-400 details-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="p-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1456,15 +1542,23 @@ export function PolicyForm({
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Prompt Injection</label>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
-                      <Input
-                        type="range"
-                        step="0.01"
-                        min="0"
-                        max="1"
-                        {...register("promptInjectionThreshold")}
-                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
-                      />
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-neutral-700 px-2 py-1 rounded">
+                          {watch("promptInjectionThreshold") || "0.5"}
+                        </span>
+                      </div>
+                      <div className="relative mt-1">
+                        <Input
+                          type="range"
+                          step="0.01"
+                          min="0"
+                          max="1"
+                          {...register("promptInjectionThreshold")}
+                          className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                          title={`Current value: ${watch("promptInjectionThreshold") || "0.5"}`}
+                        />
+                      </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Match Type</label>
@@ -1495,8 +1589,10 @@ export function PolicyForm({
             {/* Regex Scanner */}
             {enabledScanners.includes("Regex") && (
               <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
-                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                <summary className="cursor-pointer rounded-lg p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors flex items-center gap-3">
+                  <Search className="w-5 h-5 text-teal-600 dark:text-teal-400" />
                   <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Regex</h4>
+                  <ChevronDown className="w-4 h-4 ml-auto text-gray-500 dark:text-gray-400 details-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="p-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1511,8 +1607,8 @@ export function PolicyForm({
                         control={control}
                         render={({ field }) => (
                           <TagInput
-                            value={typeof field.value === 'string' ? field.value.split(',').map(s => s.trim()).filter(Boolean) : (field.value || [])}
-                            onChange={(value) => field.onChange(value.join(','))}
+                            value={field.value || []}
+                            onChange={field.onChange}
                             placeholder="Add regex pattern"
                             className="mt-1"
                           />
@@ -1535,8 +1631,10 @@ export function PolicyForm({
             {/* Secrets Scanner */}
             {enabledScanners.includes("Secrets") && (
               <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
-                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                <summary className="cursor-pointer rounded-lg p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors flex items-center gap-3">
+                  <Lock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                   <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Secrets</h4>
+                  <ChevronDown className="w-4 h-4 ml-auto text-gray-500 dark:text-gray-400 details-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="p-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1571,8 +1669,10 @@ export function PolicyForm({
             {/* Sentiment Scanner */}
             {enabledScanners.includes("Sentiment") && (
               <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
-                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                <summary className="cursor-pointer rounded-lg p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors flex items-center gap-3">
+                  <Heart className="w-5 h-5 text-rose-600 dark:text-rose-400" />
                   <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Sentiment</h4>
+                  <ChevronDown className="w-4 h-4 ml-auto text-gray-500 dark:text-gray-400 details-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="p-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1581,15 +1681,23 @@ export function PolicyForm({
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Sentiment</label>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
-                      <Input
-                        type="range"
-                        step="0.01"
-                        min="-1"
-                        max="1"
-                        {...register("sentimentThreshold")}
-                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
-                      />
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-neutral-700 px-2 py-1 rounded">
+                          {watch("sentimentThreshold") || "0.0"}
+                        </span>
+                      </div>
+                      <div className="relative mt-1">
+                        <Input
+                          type="range"
+                          step="0.01"
+                          min="-1"
+                          max="1"
+                          {...register("sentimentThreshold")}
+                          className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                          title={`Current value: ${watch("sentimentThreshold") || "0.0"}`}
+                        />
+                      </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Match Type</label>
@@ -1604,11 +1712,13 @@ export function PolicyForm({
               </details>
             )}
 
-            {/* Token Limit Scanner */}
+            {/* TokenLimit Scanner */}
             {enabledScanners.includes("TokenLimit") && (
               <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
-                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                <summary className="cursor-pointer rounded-lg p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors flex items-center gap-3">
+                  <Hash className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                   <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Token Limit</h4>
+                  <ChevronDown className="w-4 h-4 ml-auto text-gray-500 dark:text-gray-400 details-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="p-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1652,8 +1762,10 @@ export function PolicyForm({
             {/* Toxicity Scanner */}
             {enabledScanners.includes("Toxicity") && (
               <details className="border border-gray-200 dark:border-neutral-700 rounded-lg">
-                <summary className="cursor-pointer p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors">
+                <summary className="cursor-pointer rounded-lg p-4 bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
                   <h4 className="text-md font-medium text-gray-900 dark:text-gray-100">Toxicity</h4>
+                  <ChevronDown className="w-4 h-4 ml-auto text-gray-500 dark:text-gray-400 details-open:rotate-180 transition-transform" />
                 </summary>
                 <div className="p-4 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1662,33 +1774,24 @@ export function PolicyForm({
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Toxicity</label>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
-                      <Input
-                        type="range"
-                        step="0.01"
-                        min="0"
-                        max="1"
-                        {...register("toxicityThreshold")}
-                        className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Match Type</label>
-                      <Controller
-                        name="toxicityMatchType"
-                        control={control}
-                        render={({ field }) => (
-                          <Select onValueChange={field.onChange} value={field.value ? String(field.value) : ""}>
-                            <SelectTrigger className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700">
-                              <SelectValue placeholder="Select match type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="full">full</SelectItem>
-                              <SelectItem value="sentence">sentence</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Threshold</label>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-neutral-700 px-2 py-1 rounded">
+                          {watch("toxicityThreshold") || "0.5"}
+                        </span>
+                      </div>
+                      <div className="relative mt-1">
+                        <Input
+                          type="range"
+                          step="0.01"
+                          min="0"
+                          max="1"
+                          defaultValue="0.5"
+                          {...register("toxicityThreshold")}
+                          className="mt-1 bg-gray-50 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700"
+                          title={`Current value: ${watch("toxicityThreshold") || "0.5"}`}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

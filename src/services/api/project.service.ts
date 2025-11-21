@@ -33,6 +33,21 @@ export const projectService = {
   },
 
   /**
+   * Get projects dropdown list
+   */
+  async getDropdown(): Promise<{ projects: Project[] }> {
+    try {
+      const response = await apiClient.get<{ data: { projects: Project[] } }>(
+        apiConfig.endpoints.projectsDropdown
+      );
+
+      return response.data.data;
+    } catch (error) {
+      return handleApiError(error, "Get Projects Dropdown");
+    }
+  },
+
+  /**
    * Get project by ID
    */
   async getById(id: string): Promise<Project> {
