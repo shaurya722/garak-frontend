@@ -6,6 +6,14 @@ import { Button } from '@/components/ui/button';
 import MainLayout from '@/components/layout/main-layout';
 import { Edit, Trash2, ArrowLeft } from 'lucide-react';
 
+interface CategoryProbe {
+  id?: string;
+  probeId?: string;
+  name?: string;
+  description?: string | null;
+  createdAt?: string;
+}
+
 export default function ViewCategoryPage() {
   const router = useRouter();
   const { id } = useParams();
@@ -110,7 +118,7 @@ export default function ViewCategoryPage() {
                 </label>
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {category.probes && Array.isArray(category.probes) && category.probes.length > 0 ? (
-                    category.probes.map((probe: any, index: number) => {
+                    category.probes.map((probe: CategoryProbe, index: number) => {
                       // Handle probe object structure from API
                       const probeId = probe.probeId || probe.id;
                       const probeName = probe.name || probeId;

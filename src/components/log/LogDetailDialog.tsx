@@ -44,7 +44,7 @@ export function LogDetailDialog({ log, open, onOpenChange }: LogDetailDialogProp
             </div>
             <div>
               <label className="text-sm font-medium text-muted-foreground">Created At</label>
-              <p className="text-sm">{formatDate(log.createdAt)}</p>
+              <p className="text-sm">{formatDate(log.createdAt || '')}</p>
             </div>
           </div>
 

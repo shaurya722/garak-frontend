@@ -401,7 +401,7 @@ export function LogList() {
                     </TableCell>
                     <TableCell>
                       <div className="truncate max-w-xs" title={String(policyMap.get(log.policyId || '') || log.policyId || 'N/A')}>
-                        {policyMap.get(log.policyId || '') || log.policyId || 'N/A'}
+                        {String(policyMap.get(log.policyId || '') || log.policyId || 'N/A')}
                       </div>
                     </TableCell>
                     <TableCell>

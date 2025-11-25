@@ -67,7 +67,7 @@ export function JobDetail({ jobId }: JobDetailProps) {
       await PDFService.generateJobReportPDF({
         jobId,
         job,
-        reportData: reportData as unknown as { data: any[] },
+        reportData: reportData as unknown as { data: unknown[] },
       });
       toast.success('PDF generated successfully');
     } catch (error) {

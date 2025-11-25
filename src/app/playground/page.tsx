@@ -106,8 +106,11 @@ export default function Playground() {
       // Add Cohere response
       const assistantMessage: Message = { role: 'assistant', content: cohereRes };
       setMessages(prev => [...prev, assistantMessage]);
-    } catch (error: any) {
-      const errorMessage: Message = { role: 'assistant', content: `Error: ${error.message}` };
+    } catch (error: unknown) {
+      const errorMessage: Message = {
+        role: 'assistant',
+        content: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`
+      };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setLoading(false);
@@ -162,17 +165,6 @@ export default function Playground() {
 
 
       </div>
-            <br />
-        <br />
-        <br />
-
-        <br />
-
-        <br />
-        <br />
-
-        <br />
-        <br />
     </div>
     </MainLayout>
   );

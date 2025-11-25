@@ -52,10 +52,12 @@ export const apiConfig = {
     detectorsTest: `${API_BASE_URL}/api/detectors/test`,
 
     // Jobs
+    jobs: `${API_BASE_URL}/management/company/job/list`,
     jobsList: `${API_BASE_URL}/management/company/job/list`,
     jobsDropdown: `${API_BASE_URL}/management/company/job/dropdown`,
     jobsCreate: `${API_BASE_URL}/management/company/job/create`,
     jobsActive: `${API_BASE_URL}/management/company/job/active`,
+    runGarak: `${API_BASE_URL}/api/run-garak`,
     getJob: (id: string) => `${API_BASE_URL}/management/company/job/${id}`,
     updateJob: (id: string) => `${API_BASE_URL}/management/company/job/${id}`,
     deleteJob: (id: string) => `${API_BASE_URL}/management/company/job/${id}`,
@@ -80,5 +82,8 @@ export const apiConfig = {
 
 // === Helper Functions ===
 export const getJobUrl = (jobId: string) => `${API_BASE_URL}/management/company/job/${jobId}`;
+export const getJobResultsUrl = (jobId: string) => `${API_BASE_URL}/management/company/job/${jobId}/results`;
+export const getJobEnhancedUrl = (jobId: string) => `${API_BASE_URL}/management/company/job/${jobId}/enhanced`;
+export const getJobCiMetricsUrl = (jobId: string) => `${API_BASE_URL}/management/company/job/${jobId}/ci-metrics`;
 
 export default apiConfig;

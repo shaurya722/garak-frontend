@@ -35,6 +35,17 @@ interface TestJob {
   error_message: string | null;
 }
 
+interface ApiJobResponse {
+  job_id?: string;
+  status?: string;
+  config_name?: string;
+  probes?: unknown[];
+  model_type?: string;
+  created_at?: string;
+  completed_at?: string | null;
+  error_message?: string | null;
+}
+
 const statusConfig = {
   PENDING: { icon: Clock, color: "bg-yellow-100 text-yellow-800", label: "Pending" },
   STARTED: { icon: Activity, color: "bg-blue-100 text-blue-800", label: "Running" },
@@ -62,11 +73,11 @@ function TestsPageContent() {
     try {
       const response = await api.get(apiConfig.endpoints.jobs);
       // Map the API response to match your frontend's expected structure
-      const transformedJobs = response.data.items.map((job: any) => ({
+      const transformedJobs = response.data.items.map((job: ApiJobResponse) => ({
         job_id: job.job_id || '',
-        status: job.status || 'PENDING',
+        status: (job.status as TestJob["status"]) || 'PENDING',
         config_name: job.config_name || 'Unnamed Job',
-        probes: job.probes || [],
+        probes: Array.isArray(job.probes) ? job.probes.map(String) : [],
         model_type: job.model_type || 'N/A',
         created_at: job.created_at || new Date().toISOString(),
         completed_at: job.completed_at || null,

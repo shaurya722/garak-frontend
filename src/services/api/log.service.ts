@@ -10,12 +10,17 @@ export const logService = {
     try {
       const { page = 1, limit = 10, type = 'RED' } = params;
 
-      const response = await apiClient.post<{ data: LogResponse }>(
+      const response = await apiClient.post<{ data: LogResponse } | LogResponse>(
         `${apiConfig.endpoints.logsList}?page=${page}&limit=${limit}`,
         { type }
       );
 
-      return response.data.data || response.data;
+      // Handle both response formats: { data: LogResponse } or direct LogResponse
+      const responseData = response.data;
+      if (responseData && typeof responseData === 'object' && 'data' in responseData) {
+        return responseData.data as LogResponse;
+      }
+      return responseData as LogResponse;
     } catch (error) {
       return handleApiError(error, "Get Logs List");
     }
@@ -26,12 +31,17 @@ export const logService = {
     try {
       const { page = 1, limit = 10, type = 'RED' } = params;
 
-      const response = await apiClient.post<{ data: LogResponse }>(
+      const response = await apiClient.post<{ data: LogResponse } | LogResponse>(
         `${apiConfig.endpoints.logsJob(jobId)}?page=${page}&limit=${limit}`,
         { type }
       );
 
-      return response.data.data || response.data;
+      // Handle both response formats: { data: LogResponse } or direct LogResponse
+      const responseData = response.data;
+      if (responseData && typeof responseData === 'object' && 'data' in responseData) {
+        return responseData.data as LogResponse;
+      }
+      return responseData as LogResponse;
     } catch (error) {
       return handleApiError(error, "Get Job Logs");
     }
