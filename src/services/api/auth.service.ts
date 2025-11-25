@@ -40,12 +40,17 @@ export const authService = {
 
   async register(credentials: RegisterCredentials): Promise<User> {
     try {
-      const response = await apiClient.post<{ data: User }>(
+      const response = await apiClient.post<{ data: User } | User>(
         apiConfig.endpoints.authCompanyRegister,
         credentials
       );
 
-      return response.data.data || response.data;
+      // Handle both response formats: { data: User } or direct User
+      const responseData = response.data;
+      if (responseData && typeof responseData === 'object' && 'data' in responseData) {
+        return responseData.data as User;
+      }
+      return responseData as User;
     } catch (error) {
       return handleApiError(error, "Register");
     }

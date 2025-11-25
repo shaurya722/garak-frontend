@@ -233,21 +233,18 @@ export default function PolicyPage() {
                     <Layers className="w-4 h-4 text-primary" /> Categories
                   </h3>
                   <div className="space-y-3">
-                    {policy.categories?.length ? (
-                      policy.categories.map((cat) => (
+                    {policy.categoryIds && policy.categoryIds.length > 0 ? (
+                      policy.categoryIds.map((catId) => (
                         <div
-                          key={cat.id}
+                          key={catId}
                           className="p-3 rounded-lg border hover:shadow-sm transition-all bg-muted/40"
                         >
                           <div className="flex items-center justify-between">
-                            <span className="font-medium">{cat.name}</span>
+                            <span className="font-medium font-mono text-sm">{catId}</span>
                             <Badge variant="outline" className="text-xs">
-                              {cat.category}
+                              Category
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {cat.description}
-                          </p>
                         </div>
                       ))
                     ) : (
@@ -264,29 +261,18 @@ export default function PolicyPage() {
                     <Shield className="w-4 h-4 text-primary" /> Detectors
                   </h3>
                   <div className="space-y-3">
-                    {policy.detectors?.length ? (
-                      policy.detectors.map((det) => (
+                    {policy.detectorIds && policy.detectorIds.length > 0 ? (
+                      policy.detectorIds.map((detId) => (
                         <div
-                          key={det.id}
+                          key={detId}
                           className="p-3 rounded-lg border hover:shadow-sm transition-all bg-muted/40"
                         >
                           <div className="flex items-center justify-between">
-                            <span className="font-medium">
-                              {det.detectorName}
+                            <span className="font-medium font-mono text-sm">
+                              {detId}
                             </span>
                             <Badge variant="outline" className="text-xs">
-                              {det.detectorType}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {det.description}
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                            <Badge variant="secondary">
-                              {det.creationType}
-                            </Badge>
-                            <Badge variant="outline">
-                              Confidence: {(det.confidence * 100).toFixed(0)}%
+                              Detector
                             </Badge>
                           </div>
                         </div>

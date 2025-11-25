@@ -353,7 +353,7 @@ export function PolicyForm({
         languageValidLanguages: initialData.languageValidLanguages,
         regexPatterns: initialData.regexPatterns,
       }),
-    } as Partial<PolicyFormValues>,
+    } as unknown as Partial<PolicyFormValues>,
   });
 
   const {

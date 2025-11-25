@@ -1,11 +1,12 @@
 import { JobForm } from '@/components/job/JobForm'
 
 type EditJobPageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
-export default function EditJobPage({ params }: EditJobPageProps) {
-  return <JobForm mode="edit" jobId={params.id} />
+export default async function EditJobPage({ params }: EditJobPageProps) {
+  const { id } = await params;
+  return <JobForm mode="edit" jobId={id} />
 }

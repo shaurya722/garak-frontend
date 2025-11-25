@@ -30,12 +30,17 @@ export const jobService = {
     try {
       const { page = 1, limit = 10 } = params;
 
-      const response = await apiClient.post<{ data: JobResponse }>(
+      const response = await apiClient.post<{ data: JobResponse } | JobResponse>(
         `${apiConfig.endpoints.jobsList}?page=${page}&limit=${limit}`,
         {} 
       );
 
-      return response.data.data || response.data;
+      // Handle both response formats: { data: JobResponse } or direct JobResponse
+      const responseData = response.data;
+      if (responseData && typeof responseData === 'object' && 'data' in responseData) {
+        return responseData.data as JobResponse;
+      }
+      return responseData as JobResponse;
     } catch (error) {
       return handleApiError(error, "Get Jobs List");
     }

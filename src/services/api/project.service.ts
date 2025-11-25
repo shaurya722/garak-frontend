@@ -16,12 +16,17 @@ export const projectService = {
     try {
       const { page = 1, limit = 10 } = params;
 
-      const response = await apiClient.post<{ data: ProjectResponse }>(
+      const response = await apiClient.post<{ data: ProjectResponse } | ProjectResponse>(
         `${apiConfig.endpoints.projectsList}?page=${page}&limit=${limit}`,
         {} 
       );
 
-      return response.data.data || response.data;
+      // Handle both response formats: { data: ProjectResponse } or direct ProjectResponse
+      const responseData = response.data;
+      if (responseData && typeof responseData === 'object' && 'data' in responseData) {
+        return responseData.data as ProjectResponse;
+      }
+      return responseData as ProjectResponse;
     } catch (error) {
       return handleApiError(error, "Get Projects List");
     }

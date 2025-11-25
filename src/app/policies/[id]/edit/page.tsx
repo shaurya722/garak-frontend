@@ -4,11 +4,13 @@ import { useParams, useRouter } from 'next/navigation';
 import { PolicyForm } from '@/components/policy/PolicyForm';
 import { usePolicy } from '@/hooks/use-policies';
 import MainLayout from '@/components/layout/main-layout';
+import type { PolicyFormData } from '@/types/policies.type';
 
 export default function EditPolicyPage() {
+  const params = useParams();
   const router = useRouter();
-  const { id } = useParams();
-  const { data: policy, isLoading } = usePolicy(id as string);
+  const id = params.id as string;
+  const { data: policy, isLoading } = usePolicy(id);
   const handleSuccess = () => {
     router.push(`/policies`);
   };
@@ -23,23 +25,23 @@ export default function EditPolicyPage() {
       <PolicyForm
         mode="edit"
         policyId={id as string}
-        initialData={policy.type === "RED" ? {
+        initialData={(policy.type === "RED" ? {
           name: policy.name,
           description: policy.description,
           type: policy.type,
           defaultDetector: policy.defaultDetector,
-          categoryIds: policy.categories?.map(cat => cat.id) || null,
-          detectorIds: policy.detectors?.map(det => det.id) || null,
+          categoryIds: policy.categoryIds,
+          detectorIds: policy.detectorIds,
         } : {
           name: policy.name,
           description: policy.description,
           type: policy.type,
           defaultDetector: policy.defaultDetector,
-          // BLUE policy scanner configurations
+          // BLUE policy scanner configurations - convert arrays to comma-separated strings
           anonymize: policy.anonymize,
           anonymizeType: policy.anonymizeType,
-          anonymizeHiddenNames: policy.anonymizeHiddenNames,
-          anonymizeAllowedNames: policy.anonymizeAllowedNames,
+          anonymizeHiddenNames: Array.isArray(policy.anonymizeHiddenNames) ? policy.anonymizeHiddenNames.join(', ') : policy.anonymizeHiddenNames || '',
+          anonymizeAllowedNames: Array.isArray(policy.anonymizeAllowedNames) ? policy.anonymizeAllowedNames.join(', ') : policy.anonymizeAllowedNames || '',
           anonymizePreamble: policy.anonymizePreamble,
           anonymizeUseFaker: policy.anonymizeUseFaker,
           anonymizeThreshold: policy.anonymizeThreshold,
@@ -47,30 +49,30 @@ export default function EditPolicyPage() {
           banCodeThreshold: policy.banCodeThreshold,
           banCompetitors: policy.banCompetitors,
           banCompetitorsThreshold: policy.banCompetitorsThreshold,
-          banCompetitorsCompetitors: policy.banCompetitorsCompetitors,
+          banCompetitorsCompetitors: Array.isArray(policy.banCompetitorsCompetitors) ? policy.banCompetitorsCompetitors.join(', ') : policy.banCompetitorsCompetitors || '',
           banSubstrings: policy.banSubstrings,
-          banSubstringsSubstrings: policy.banSubstringsSubstrings,
+          banSubstringsSubstrings: Array.isArray(policy.banSubstringsSubstrings) ? policy.banSubstringsSubstrings.join(', ') : policy.banSubstringsSubstrings || '',
           banSubstringsMatchType: policy.banSubstringsMatchType,
           banSubstringsCaseSensitive: policy.banSubstringsCaseSensitive,
           banSubstringsRedact: policy.banSubstringsRedact,
           banSubstringsContainsAll: policy.banSubstringsContainsAll,
           banTopics: policy.banTopics,
           banTopicsThreshold: policy.banTopicsThreshold,
-          banTopicsTopics: policy.banTopicsTopics,
+          banTopicsTopics: Array.isArray(policy.banTopicsTopics) ? policy.banTopicsTopics.join(', ') : policy.banTopicsTopics || '',
           code: policy.code,
-          codeLanguages: policy.codeLanguages,
+          codeLanguages: Array.isArray(policy.codeLanguages) ? policy.codeLanguages.join(', ') : policy.codeLanguages || '',
           codeIsBlocked: policy.codeIsBlocked,
           gibberish: policy.gibberish,
           gibberishThreshold: policy.gibberishThreshold,
           gibberishMatchType: policy.gibberishMatchType,
           language: policy.language,
-          languageValidLanguages: policy.languageValidLanguages,
+          languageValidLanguages: Array.isArray(policy.languageValidLanguages) ? policy.languageValidLanguages.join(', ') : policy.languageValidLanguages || '',
           languageMatchType: policy.languageMatchType,
           promptInjection: policy.promptInjection,
           promptInjectionThreshold: policy.promptInjectionThreshold,
           promptInjectionMatchType: policy.promptInjectionMatchType,
           regex: policy.regex,
-          regexPatterns: policy.regexPatterns,
+          regexPatterns: Array.isArray(policy.regexPatterns) ? policy.regexPatterns.join(', ') : policy.regexPatterns || '',
           regexIsBlocked: policy.regexIsBlocked,
           regexRedact: policy.regexRedact,
           secrets: policy.secrets,
@@ -84,7 +86,7 @@ export default function EditPolicyPage() {
           toxicity: policy.toxicity,
           toxicityThreshold: policy.toxicityThreshold,
           toxicityMatchType: policy.toxicityMatchType,
-        }}
+        }) as Partial<PolicyFormData>}
         onSuccess={handleSuccess}
       />
     </div>

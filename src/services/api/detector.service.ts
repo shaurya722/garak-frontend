@@ -18,12 +18,17 @@ export const detectorService = {
       
       const body = creationType ? { creationType } : {};
       
-      const response = await apiClient.post<{ data: DetectorResponse }>(
+      const response = await apiClient.post<{ data: DetectorResponse } | DetectorResponse>(
         `${apiConfig.endpoints.detectorsList}?page=${page}&limit=${limit}`,
         body
       );
 
-      return response.data.data || response.data;
+      // Handle both response formats: { data: DetectorResponse } or direct DetectorResponse
+      const responseData = response.data;
+      if (responseData && typeof responseData === 'object' && 'data' in responseData) {
+        return responseData.data as DetectorResponse;
+      }
+      return responseData as DetectorResponse;
     } catch (error) {
       return handleApiError(error, "Get Detectors List");
     }
@@ -32,11 +37,15 @@ export const detectorService = {
 
   async getById(id: string): Promise<Detector> {
     try {
-      const response = await apiClient.get<{ data: { detector: Detector } }>(
+      const response = await apiClient.get<{ data: { detector: Detector } } | Detector>(
         apiConfig.endpoints.getDetector(id)
       );
 
-      return response.data.data?.detector || response.data.data || response.data;
+      const responseData = response.data;
+      if (responseData && typeof responseData === 'object' && 'data' in responseData && responseData.data && 'detector' in responseData.data) {
+        return responseData.data.detector as Detector;
+      }
+      return responseData as Detector;
     } catch (error) {
       return handleApiError(error, "Get Detector");
     }
@@ -60,12 +69,17 @@ export const detectorService = {
     try {
       const { page = 1, limit = 10 } = params;
       
-      const response = await apiClient.post<{ data: DetectorResponse }>(
+      const response = await apiClient.post<{ data: DetectorResponse } | DetectorResponse>(
         `${apiConfig.endpoints.detectorsBuiltin}?page=${page}&limit=${limit}`,
         { creationType: "BuiltIn" }
       );
 
-      return response.data.data || response.data;
+      // Handle both response formats: { data: DetectorResponse } or direct DetectorResponse
+      const responseData = response.data;
+      if (responseData && typeof responseData === 'object' && 'data' in responseData) {
+        return responseData.data as DetectorResponse;
+      }
+      return responseData as DetectorResponse;
     } catch (error) {
       return handleApiError(error, "Get Built-in Detectors");
     }
@@ -74,12 +88,16 @@ export const detectorService = {
 
   async create(payload: CreateDetectorPayload): Promise<Detector> {
     try {
-      const response = await apiClient.post<{ data: Detector }>(
+      const response = await apiClient.post<{ data: Detector } | Detector>(
         apiConfig.endpoints.detectorsCreate,
         payload
       );
 
-      return response.data.data || response.data;
+      const responseData = response.data;
+      if (responseData && typeof responseData === 'object' && 'data' in responseData) {
+        return responseData.data as Detector;
+      }
+      return responseData as Detector;
     } catch (error) {
       return handleApiError(error, "Create Detector");
     }
@@ -88,12 +106,16 @@ export const detectorService = {
 
   async update(id: string, payload: UpdateDetectorPayload): Promise<Detector> {
     try {
-      const response = await apiClient.put<{ data: Detector }>(
+      const response = await apiClient.put<{ data: Detector } | Detector>(
         apiConfig.endpoints.updateDetector(id),
         payload
       );
 
-      return response.data.data || response.data;
+      const responseData = response.data;
+      if (responseData && typeof responseData === 'object' && 'data' in responseData) {
+        return responseData.data as Detector;
+      }
+      return responseData as Detector;
     } catch (error) {
       return handleApiError(error, "Update Detector");
     }
