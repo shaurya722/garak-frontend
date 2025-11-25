@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -19,328 +18,100 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Shield,
   Settings,
+  Shield,
   Activity,
   Eye,
   Play,
-  TrendingUp,
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import MainLayout from "@/components/layout/main-layout";
-import { apiConfig } from "@/config/api";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { ProtectedRoute } from "@/components/auth/protected-route";
-
-interface RestConfig {
-  config_id: string;
-  config_name: string;
-  description?: string;
-  created_at: string;
-  rest_generator: {
-    name: string;
-    uri: string;
-    method: string;
-  };
-}
-
-interface Policy {
-  id?: string;
-  policy_id?: string;
-  name?: string;
-  policy_name?: string;
-  probe_count?: number;
-  probes_count?: number;
-  is_default?: boolean;
-  created_at?: string;
-  updated_at?: string;
-  description?: string;
-}
+import { useProjects } from "@/hooks/use-projects";
+import { usePolicies } from "@/hooks/use-policies";
+import { useJobs } from "@/hooks/use-jobs";
+import { useLogs } from "@/hooks/use-logs";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+} from "recharts";
 
 interface DashboardStats {
   projects: number;
   policies: number;
-  detectors: number;
-  activeTests: number;
+  jobs: number;
+  logs: number;
 }
 
 function DashboardContent() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [recentConfigs, setRecentConfigs] = useState<RestConfig[]>([]);
-  const [recentPolicies, setRecentPolicies] = useState<Policy[]>([]);
+  const { data: projectsData, isLoading: projectsLoading } = useProjects();
+  const { data: policiesData, isLoading: policiesLoading } = usePolicies();
+  const { data: jobsData, isLoading: jobsLoading } = useJobs();
+  const { data: logsData, isLoading: logsLoading } = useLogs();
 
-  // Debug state changes
-  useEffect(() => {
-    console.log("Recent configs state updated:", recentConfigs);
-  }, [recentConfigs]);
+  const isLoading = projectsLoading || policiesLoading || jobsLoading || logsLoading;
 
-  useEffect(() => {
-    console.log("Recent policies state updated:", recentPolicies);
-  }, [recentPolicies]);
-  const [stats, setStats] = useState<DashboardStats>({
-    projects: 0,
-    policies: 0,
-    detectors: 0,
-    activeTests: 0,
-  });
-
-  useEffect(() => {
-    fetchDashboardData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    try {
-      await Promise.all([
-        fetchRecentConfigs(),
-        fetchRecentPolicies(),
-        fetchStats(),
-      ]);
-    } catch (error) {
-      console.error("Failed to fetch dashboard data:", error);
-      toast.error("Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-    }
+  const stats: DashboardStats = {
+    projects: projectsData?.docs?.length || 0,
+    policies: policiesData?.docs?.length || 0,
+    jobs: jobsData?.docs?.length || 0,
+    logs: logsData?.docs?.length || 0,
   };
 
-  const fetchRecentConfigs = async () => {
-    try {
-      console.log(
-        "Fetching recent configs from:",
-        apiConfig.endpoints.restConfigs
-      );
-      const response = await fetch(apiConfig.endpoints.restConfigs);
-      console.log("Recent configs response status:", response.status);
+  const recentProjects = projectsData?.docs?.slice(0, 5) || [];
+  const recentPolicies = policiesData?.docs?.slice(0, 5) || [];
+  const recentJobs = jobsData?.docs?.slice(0, 5) || [];
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Recent configs raw data:", data);
+  // Sample attack data - in a real app this would come from API
+  const attackData = [
+    { name: 'Prompt Injection', redTeam: 85, blueTeam: 92, total: 177 },
+    { name: 'Jailbreak Attempts', redTeam: 67, blueTeam: 89, total: 156 },
+    { name: 'Data Poisoning', redTeam: 43, blueTeam: 76, total: 119 },
+    { name: 'Model Inversion', redTeam: 34, blueTeam: 68, total: 102 },
+    { name: 'Adversarial Inputs', redTeam: 56, blueTeam: 83, total: 139 },
+  ];
 
-        // Get the 3 most recent configs, sorted by creation date
-        let recent = Array.isArray(data) ? data : [];
-        recent = recent
-          .sort(
-            (a, b) =>
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime()
-          )
-          .slice(0, 3);
-        console.log("Recent configs processed:", recent);
-        setRecentConfigs(recent);
-      } else {
-        console.error(
-          "Failed to fetch recent configs - Status:",
-          response.status
-        );
-        const errorText = await response.text();
-        console.error("Error response:", errorText);
-      }
-    } catch (error) {
-      console.error("Failed to fetch recent configs:", error);
-    }
-  };
+  const attackTypeData = [
+    { name: 'Successful', value: 285, color: '#ef4444' },
+    { name: 'Blocked', value: 408, color: '#10b981' },
+  ];
 
-  const fetchRecentPolicies = async () => {
-    try {
-      console.log(
-        "Fetching recent policies from:",
-        apiConfig.endpoints.policies
-      );
-      const response = await fetch(apiConfig.endpoints.policies);
-      console.log("Recent policies response status:", response.status);
+  // Time series data for attack trends
+  const attackTrendsData = [
+    { month: 'Jan', attacks: 120, defenses: 95, successRate: 78 },
+    { month: 'Feb', attacks: 135, defenses: 110, successRate: 82 },
+    { month: 'Mar', attacks: 98, defenses: 125, successRate: 85 },
+    { month: 'Apr', attacks: 145, defenses: 135, successRate: 88 },
+    { month: 'May', attacks: 167, defenses: 142, successRate: 91 },
+    { month: 'Jun', attacks: 189, defenses: 158, successRate: 87 },
+  ];
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Recent policies raw data:", data);
-
-        // Handle both array and object responses
-        let policies = [];
-        if (Array.isArray(data)) {
-          policies = data;
-        } else if (data && typeof data === "object") {
-          // If the API returns an object with a policies array
-          if (Array.isArray(data.policies)) {
-            policies = data.policies;
-          } else if (Array.isArray(data.items)) {
-            policies = data.items;
-          } else {
-            // If it's a single policy object, wrap it in an array
-            policies = [data];
-          }
-        }
-
-        // Get the 3 most recent policies, sorted by creation date
-        const recent = policies
-          .filter((policy: Policy) => policy) // Filter out any null/undefined entries
-          .sort((a: Policy, b: Policy) => {
-            const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-            const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-            return dateB - dateA;
-          })
-          .slice(0, 3);
-
-        console.log("Recent policies processed:", recent);
-        setRecentPolicies(recent);
-      } else {
-        console.error(
-          "Failed to fetch recent policies - Status:",
-          response.status
-        );
-        const errorText = await response.text();
-        console.error("Error response:", errorText);
-        toast.error(`Failed to load policies: ${response.status} ${errorText}`);
-      }
-    } catch (error) {
-      console.error("Failed to fetch recent policies:", error);
-      toast.error("Failed to load policies. Please try again.");
-    }
-  };
-
-  const fetchWithRetry = async (
-    url: string,
-    options = {},
-    retries = 2,
-    backoff = 300
-  ) => {
-    try {
-      const response = await fetch(url, options);
-      if (!response.ok)
-        throw new Error(`HTTP error! status: ${response.status}`);
-      return response;
-    } catch (error) {
-      if (retries === 0) throw error;
-      console.log(`Retrying ${url}... (${retries} attempts left)`);
-      await new Promise((resolve) => setTimeout(resolve, backoff));
-      return fetchWithRetry(url, options, retries - 1, backoff * 2);
-    }
-  };
-
-  const fetchStats = async () => {
-    try {
-      // Fetch all stats in parallel, but handle active tests separately
-      const [projectsResponse, policiesResponse, detectorsResponse] =
-        await Promise.all([
-          fetch(apiConfig.endpoints.restConfigs),
-          fetch(apiConfig.endpoints.policies),
-          fetch(apiConfig.endpoints.detectors),
-        ]);
-
-      // Handle active tests separately with retry logic
-      let activeTestsResponse;
-      try {
-        activeTestsResponse = await fetchWithRetry(
-          apiConfig.endpoints.jobsActive
-        );
-      } catch (error) {
-        console.warn("Using fallback active tests count due to error:", error);
-        // Set a default value when the endpoint fails
-        setStats((prev) => ({ ...prev, activeTests: 0 }));
-      }
-
-      // Process projects count
-      if (projectsResponse.ok) {
-        const projectsData = await projectsResponse.json();
-        console.log("Projects data:", projectsData);
-        setStats((prev) => ({
-          ...prev,
-          projects: Array.isArray(projectsData) ? projectsData.length : 0,
-        }));
-      } else {
-        console.error("Failed to fetch projects:", projectsResponse.status);
-      }
-
-      // Process policies count with better error handling and response format support
-      if (policiesResponse.ok) {
-        const data = await policiesResponse.json();
-        console.log("Policies data:", data);
-
-        let policies = [];
-        if (Array.isArray(data)) {
-          policies = data;
-        } else if (data && typeof data === "object") {
-          policies = data.policies || data.items || [];
-          if (!Array.isArray(policies) && Object.keys(data).length > 0) {
-            // If it's a single policy object, count as 1
-            policies = [data];
-          }
-        }
-
-        const policyCount = Array.isArray(policies) ? policies.length : 0;
-        console.log("Processed policies count:", policyCount);
-        setStats((prev) => ({ ...prev, policies: policyCount }));
-      } else {
-        console.error(
-          "Failed to fetch policies - Status:",
-          policiesResponse.status
-        );
-        const errorText = await policiesResponse.text();
-        console.error("Policies error response:", errorText);
-      }
-
-      // Process detectors count
-      if (detectorsResponse.ok) {
-        const detectorsData = await detectorsResponse.json();
-        console.log("Detectors data:", detectorsData);
-        setStats((prev) => ({
-          ...prev,
-          detectors: Array.isArray(detectorsData) ? detectorsData.length : 0,
-        }));
-      } else {
-        console.error("Failed to fetch detectors:", detectorsResponse.status);
-      }
-
-      // Process active tests count if the response is available
-      if (activeTestsResponse) {
-        try {
-          const activeTestsData = await activeTestsResponse.json();
-          console.log("Active tests raw response:", activeTestsData);
-
-          let activeCount = 0;
-          if (Array.isArray(activeTestsData)) {
-            activeCount = activeTestsData.length;
-            console.log("Active tests count from array length:", activeCount);
-          } else if (activeTestsData && typeof activeTestsData === "object") {
-            // If it's an object, check if it has a count property or jobs array
-            if (activeTestsData.count !== undefined) {
-              activeCount = activeTestsData.count;
-              console.log(
-                "Active tests count from count property:",
-                activeCount
-              );
-            } else if (
-              activeTestsData.jobs &&
-              Array.isArray(activeTestsData.jobs)
-            ) {
-              activeCount = activeTestsData.jobs.length;
-              console.log("Active tests count from jobs array:", activeCount);
-            } else if (
-              activeTestsData.active_jobs &&
-              Array.isArray(activeTestsData.active_jobs)
-            ) {
-              activeCount = activeTestsData.active_jobs.length;
-              console.log(
-                "Active tests count from active_jobs array:",
-                activeCount
-              );
-            }
-          }
-
-          console.log("Final active tests count:", activeCount);
-          setStats((prev) => ({ ...prev, activeTests: activeCount }));
-        } catch (error) {
-          console.error("Error parsing active tests response:", error);
-          setStats((prev) => ({ ...prev, activeTests: 0 }));
-        }
-      }
-    } catch (error) {
-      console.error("Failed to fetch stats:", error);
-    }
-  };
+  // Radar chart data for attack distribution
+  const attackDistributionData = [
+    { subject: 'Injection', A: 85, B: 92, fullMark: 100 },
+    { subject: 'Jailbreak', A: 67, B: 89, fullMark: 100 },
+    { subject: 'Poisoning', A: 43, B: 76, fullMark: 100 },
+    { subject: 'Inversion', A: 34, B: 68, fullMark: 100 },
+    { subject: 'Adversarial', A: 56, B: 83, fullMark: 100 },
+    { subject: 'Evasion', A: 72, B: 91, fullMark: 100 },
+  ];
 
   const formatDate = (dateString: string) => {
     try {
@@ -348,11 +119,6 @@ function DashboardContent() {
     } catch {
       return dateString;
     }
-  };
-
-  const getConfigStatus = () => {
-    // Since configs don't have a status, we'll show 'Active' for all
-    return "Active";
   };
 
   const getStatusBadge = (status: string) => {
@@ -372,7 +138,7 @@ function DashboardContent() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <MainLayout>
         <div className="p-6 flex items-center justify-center min-h-[400px]">
@@ -386,7 +152,6 @@ function DashboardContent() {
   }
 
   return (
-
     <MainLayout>
       <div className="py-3 px-6 space-y-6">
         {/* Header */}
@@ -398,130 +163,337 @@ function DashboardContent() {
             </p>
           </div>
           <div className="flex items-center space-x-2">
-            <Button onClick={fetchDashboardData} variant="outline">
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-            <Link href="/tests/new">
+            <Link href="/playground">
               <Button>
                 <Play className="h-4 w-4 mr-2" />
-                Run Test
+                Open Playground
               </Button>
             </Link>
           </div>
         </div>
 
         {/* Stats Grid */}
-  
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Projects</CardTitle>
-
               <Settings className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-
             <div className="flex justify-between items-end pr-4">
               <CardContent>
                 <div className="text-2xl font-bold">{stats.projects}</div>
-
                 <p className="text-xs text-muted-foreground">
-                  REST API projects
+                  Total projects
                 </p>
               </CardContent>
-
-              <button
-                className="text-xs font-medium rounded-sm border-1 px-2 h-8 bg-[#E5E5E5] text-[#171717]"
-                onClick={() => router.push("/projects/new")}
-              >
-                Create Projects
-              </button>
-
-              {/* <Button variant="default">Create Projects</Button> */}
+              <Link href="/projects/new">
+                <Button variant="outline" size="sm">
+                  Create
+                </Button>
+              </Link>
             </div>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Policies</CardTitle>
-
               <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-
             <div className="flex justify-between items-end pr-4">
               <CardContent>
                 <div className="text-2xl font-bold">{stats.policies}</div>
-
                 <p className="text-xs text-muted-foreground">
                   Security policies
                 </p>
               </CardContent>
-
-              <button
-                className="text-xs font-medium rounded-sm border-1 px-2 h-8 text-white hover:bg-white hover:text-black"
-                onClick={() => router.push("/policies/new")}
-              >
-                Create Policies
-              </button>
+              <Link href="/policies/new">
+                <Button variant="outline" size="sm">
+                  Create
+                </Button>
+              </Link>
             </div>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Detectors</CardTitle>
-
-              <Shield className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-
-            <div className="flex justify-between items-end pr-4">
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.detectors}</div>
-
-                <p className="text-xs text-muted-foreground">
-                  Custom detectors
-                </p>
-              </CardContent>
-
-              <button
-                className="text-xs font-medium rounded-sm border-1 px-2 h-8 text-white hover:bg-white hover:text-black"
-                onClick={() => router.push("/detectors")}
-              >
-                View Detectors
-              </button>
-            </div>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Reports</CardTitle>
-
+              <CardTitle className="text-sm font-medium">Jobs</CardTitle>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-
             <div className="flex justify-between items-end pr-4">
               <CardContent>
-                <div className="text-2xl font-bold">{stats.activeTests}</div>
-
-                <p className="text-xs text-muted-foreground">total Reports</p>
+                <div className="text-2xl font-bold">{stats.jobs}</div>
+                <p className="text-xs text-muted-foreground">
+                  Active jobs
+                </p>
               </CardContent>
+              <Link href="/jobs">
+                <Button variant="outline" size="sm">
+                  View
+                </Button>
+              </Link>
+            </div>
+          </Card>
 
-              <button
-                className="text-xs rounded-sm border-1 px-2 h-8 text-white hover:bg-white hover:text-black"
-                onClick={() => router.push("/reports")}
-              >
-                View Reports
-              </button>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Logs</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <div className="flex justify-between items-end pr-4">
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.logs}</div>
+                <p className="text-xs text-muted-foreground">
+                  Total logs
+                </p>
+              </CardContent>
+              <Link href="/logs">
+                <Button variant="outline" size="sm">
+                  View
+                </Button>
+              </Link>
             </div>
           </Card>
         </div>
 
-        {/* Recent Tests Table */}
-        <div className="space-y-6">
+        {/* Attack Analytics Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Attack Types Analysis</CardTitle>
+              <CardDescription>
+                Red Team attacks vs Blue Team defenses by category
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={attackData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis
+                    dataKey="name"
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                    interval={0}
+                    tick={{ fill: '#9ca3af', fontSize: 12 }}
+                  />
+                  <YAxis tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#f9fafb'
+                    }}
+                  />
+                  <Bar dataKey="redTeam" fill="#ef4444" name="Red Team Attacks" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="blueTeam" fill="#3b82f6" name="Blue Team Defenses" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Attack Success Rate</CardTitle>
+              <CardDescription>
+                Overall success vs blocked attacks
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={attackTypeData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {attackTypeData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#f9fafb'
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex justify-center space-x-6 mt-4">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                  <span className="text-sm text-muted-foreground">
+                    Successful: {attackTypeData[0].value}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                  <span className="text-sm text-muted-foreground">
+                    Blocked: {attackTypeData[1].value}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Attack Trends Over Time</CardTitle>
+              <CardDescription>
+                Monthly attack patterns and defense effectiveness
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={attackTrendsData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fill: '#9ca3af', fontSize: 12 }}
+                  />
+                  <YAxis tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#f9fafb'
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="attacks"
+                    stroke="#f59e0b"
+                    strokeWidth={3}
+                    name="Total Attacks"
+                    dot={{ fill: '#f59e0b', strokeWidth: 2, r: 4 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="defenses"
+                    stroke="#10b981"
+                    strokeWidth={3}
+                    name="Defenses"
+                    dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Additional Analytics */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Attack Distribution Radar</CardTitle>
+              <CardDescription>
+                Multi-dimensional view of attack vectors
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <RadarChart data={attackDistributionData}>
+                  <PolarGrid stroke="#374151" />
+                  <PolarAngleAxis
+                    dataKey="subject"
+                    tick={{ fill: '#9ca3af', fontSize: 12 }}
+                  />
+                  <PolarRadiusAxis
+                    angle={90}
+                    domain={[0, 100]}
+                    tick={{ fill: '#9ca3af', fontSize: 10 }}
+                  />
+                  <Radar
+                    name="Red Team"
+                    dataKey="A"
+                    stroke="#ef4444"
+                    fill="#ef4444"
+                    fillOpacity={0.3}
+                    strokeWidth={2}
+                  />
+                  <Radar
+                    name="Blue Team"
+                    dataKey="B"
+                    stroke="#3b82f6"
+                    fill="#3b82f6"
+                    fillOpacity={0.3}
+                    strokeWidth={2}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#f9fafb'
+                    }}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Defense Effectiveness Area</CardTitle>
+              <CardDescription>
+                Cumulative defense success rates
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={attackTrendsData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fill: '#9ca3af', fontSize: 12 }}
+                  />
+                  <YAxis
+                    domain={[70, 95]}
+                    tick={{ fill: '#9ca3af', fontSize: 12 }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1f2937',
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#f9fafb'
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="successRate"
+                    stroke="#8b5cf6"
+                    fill="url(#colorSuccess)"
+                    strokeWidth={3}
+                    name="Success Rate %"
+                  />
+                  <defs>
+                    <linearGradient id="colorSuccess" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1}/>
+                    </linearGradient>
+                  </defs>
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Recent Items Tables */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Projects */}
           <Card>
             <CardHeader>
               <CardTitle>Recent Projects</CardTitle>
               <CardDescription>
-                Recently created REST API configurations
+                Recently created projects
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -529,19 +501,19 @@ function DashboardContent() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Project Name</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Result</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recentConfigs.length === 0 ? (
+                  {recentProjects.length === 0 ? (
                     <TableRow>
                       <TableCell
                         colSpan={4}
                         className="text-center text-muted-foreground py-8"
                       >
-                        No recent projects found.{" "}
+                        No projects found.{" "}
                         <Link
                           href="/projects/new"
                           className="text-blue-600 hover:underline"
@@ -551,17 +523,24 @@ function DashboardContent() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    recentConfigs.map((config) => (
-                      <TableRow key={config.config_id}>
+                    recentProjects.map((project) => (
+                      <TableRow key={project.id}>
                         <TableCell className="font-medium">
-                          {config.config_name}
+                          {project.name}
                         </TableCell>
                         <TableCell>
-                          {getStatusBadge(getConfigStatus())}
+                          <Badge variant={
+                            project.type === 'RED' ? 'destructive' :
+                            project.type === 'BLUE' ? 'default' : 'secondary'
+                          }>
+                            {project.type}
+                          </Badge>
                         </TableCell>
-                        <TableCell>{formatDate(config.created_at)}</TableCell>
                         <TableCell>
-                          <Link href={`/projects/${config.config_id}`}>
+                          {project.createdAt ? formatDate(project.createdAt) : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          <Link href={`/projects/${project.id}`}>
                             <Button variant="ghost" size="sm">
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -575,7 +554,7 @@ function DashboardContent() {
             </CardContent>
           </Card>
 
-          {/* Recent Policies Table */}
+          {/* Recent Policies */}
           <Card>
             <CardHeader>
               <CardTitle>Recent Policies</CardTitle>
@@ -587,13 +566,10 @@ function DashboardContent() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[200px]">Policy Name</TableHead>
-                    <TableHead className="w-[100px]">Type</TableHead>
-                    <TableHead className="w-[100px]">Probes</TableHead>
-                    <TableHead className="w-[200px]">Created</TableHead>
-                    <TableHead className="w-[100px] text-right">
-                      Actions
-                    </TableHead>
+                    <TableHead>Policy Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -614,40 +590,86 @@ function DashboardContent() {
                     </TableRow>
                   ) : (
                     recentPolicies.map((policy) => (
-                      <TableRow key={policy.policy_id || policy.id}>
+                      <TableRow key={policy.id}>
                         <TableCell className="font-medium">
-                          {policy.name ||
-                            policy.policy_name ||
-                            "Unnamed Policy"}
+                          {policy.name}
                         </TableCell>
                         <TableCell>
-                          <Badge
-                            variant={
-                              policy.is_default ? "default" : "secondary"
-                            }
-                          >
-                            {policy.is_default ? "Default" : "Custom"}
+                          <Badge variant="secondary">
+                            {policy.type}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {policy.probe_count || policy.probes_count || 0}
+                          {policy.createdAt ? formatDate(policy.createdAt) : 'N/A'}
                         </TableCell>
                         <TableCell>
-                          {policy.created_at
-                            ? formatDate(policy.created_at)
-                            : "N/A"}
+                          <Link href={`/policies/${policy.id}`}>
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
                         </TableCell>
-                        <TableCell className="text-right">
-                          <Link
-                            href={`/policies/${
-                              policy.policy_id || policy.id || ""
-                            }`}
-                          >
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              title="View details"
-                            >
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Recent Jobs */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Recent Jobs</CardTitle>
+              <CardDescription>
+                Recently created jobs
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Job ID</TableHead>
+                    <TableHead>Project</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentJobs.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className="text-center text-muted-foreground py-8"
+                      >
+                        No jobs found.{" "}
+                        <Link
+                          href="/jobs"
+                          className="text-blue-600 hover:underline"
+                        >
+                          Create your first job
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    recentJobs.map((job) => (
+                      <TableRow key={job.id}>
+                        <TableCell className="font-medium">
+                          {job.id}
+                        </TableCell>
+                        <TableCell>
+                          {job.project?.name || 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          {getStatusBadge(job.status || 'PENDING')}
+                        </TableCell>
+                        <TableCell>
+                          {job.createdAt ? formatDate(job.createdAt) : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          <Link href={`/jobs/${job.id}`}>
+                            <Button variant="ghost" size="sm">
                               <Eye className="h-4 w-4" />
                             </Button>
                           </Link>
@@ -666,9 +688,5 @@ function DashboardContent() {
 }
 
 export default function Dashboard() {
-  return (
-    <ProtectedRoute>
-      <DashboardContent />
-    </ProtectedRoute>
-  );
+  return <DashboardContent />;
 }

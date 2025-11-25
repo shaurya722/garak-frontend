@@ -256,10 +256,10 @@ export function ProjectForm({ projectId, mode }: ProjectFormProps) {
 
       if (mode === 'create') {
         const result = await createMutation.mutateAsync(payload);
-        router.push(`/projects/${result.id}`);
+        router.push(`/projects`);
       } else if (projectId) {
         await updateMutation.mutateAsync({ id: projectId, ...payload });
-        router.push(`/projects/${projectId}`);
+        router.push(`/projects`);
       }
     } catch (error) {
       console.error('Failed to save project:', error);
@@ -353,14 +353,24 @@ export function ProjectForm({ projectId, mode }: ProjectFormProps) {
                       name="policyId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Policy *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <FormLabel>Policy * </FormLabel>
+                          <Select onValueChange={(value) => {
+                            if (value === 'create') {
+                              router.push('/policies/new');
+                            } else {
+                              field.onChange(value);
+                            }
+                          }} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select a policy" />
                               </SelectTrigger>
+                           
                             </FormControl>
                             <SelectContent>
+                              <SelectItem value="create" className="text-blue-600 font-medium">
+                                + Create New Policy
+                              </SelectItem>
                               {policies?.filter((policy: Policy) => policy.type === watchedType).map((policy: Policy) => (
                                 <SelectItem key={policy.id} value={policy.id}>
                                   {policy.name}
@@ -370,9 +380,12 @@ export function ProjectForm({ projectId, mode }: ProjectFormProps) {
                           </Select>
                           <FormMessage />
                         </FormItem>
+                        
                       )}
                     />
+                    
                     )}
+                    
               </CardContent>
             </Card>
 

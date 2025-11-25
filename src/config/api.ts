@@ -53,10 +53,13 @@ export const apiConfig = {
 
     // Jobs
     jobsList: `${API_BASE_URL}/management/company/job/list`,
+    jobsDropdown: `${API_BASE_URL}/management/company/job/dropdown`,
     jobsCreate: `${API_BASE_URL}/management/company/job/create`,
+    jobsActive: `${API_BASE_URL}/management/company/job/active`,
     getJob: (id: string) => `${API_BASE_URL}/management/company/job/${id}`,
     updateJob: (id: string) => `${API_BASE_URL}/management/company/job/${id}`,
     deleteJob: (id: string) => `${API_BASE_URL}/management/company/job/${id}`,
+    getJobReport: (id: string, month: number, year: number) => `${API_BASE_URL}/management/company/job/${id}/report?month=${month}&year=${year}`,
 
     // Logs
     logsList: `${API_BASE_URL}/management/company/log/list`,

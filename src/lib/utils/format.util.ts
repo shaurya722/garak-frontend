@@ -2,12 +2,14 @@ export function formatDate(
   date: string | Date,
   options?: Intl.DateTimeFormatOptions
 ): string {
+  if (!date) return "Invalid date";
+
   const dateObj = typeof date === "string" ? new Date(date) : date;
-  
+
   if (isNaN(dateObj.getTime())) {
     return "Invalid date";
   }
-  
+
   return dateObj.toLocaleDateString("en-US", options || {
     year: "numeric",
     month: "short",
@@ -17,12 +19,14 @@ export function formatDate(
 
 
 export function formatDateTime(date: string | Date): string {
+  if (!date) return "Invalid date";
+
   const dateObj = typeof date === "string" ? new Date(date) : date;
-  
+
   if (isNaN(dateObj.getTime())) {
     return "Invalid date";
   }
-  
+
   return dateObj.toLocaleString("en-US", {
     year: "numeric",
     month: "short",
@@ -56,12 +60,13 @@ export function formatFileSize(bytes: number): string {
 
 
 export function capitalize(text: string): string {
-  if (!text) return text;
+  if (!text || typeof text !== 'string') return text;
   return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
 }
 
 
 export function snakeToTitle(text: string): string {
+  if (!text || typeof text !== 'string') return text;
   return text
     .split("_")
     .map(word => capitalize(word))

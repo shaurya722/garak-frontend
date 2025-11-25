@@ -7,6 +7,8 @@ import {
   JobListParams,
   CreateJobPayload,
   UpdateJobPayload,
+  JobReportResponse,
+  JobReportParams,
 } from '@/types';
 import { toast } from 'sonner';
 
@@ -75,5 +77,21 @@ export const useDeleteJob = () => {
       console.error('Job deletion failed:', error);
       toast.error('Failed to delete job');
     },
+  });
+};
+
+export const useJobReport = (id: string, params: JobReportParams) => {
+  return useQuery<JobReportResponse>({
+    queryKey: queryKeys.jobs.report(id, params as unknown as Record<string, unknown>),
+    queryFn: () => jobService.getJobReport(id, params),
+    enabled: !!id && !!params.month && !!params.year,
+  });
+};
+
+export const useJobsDropdown = () => {
+  return useQuery<{ jobs: Job[] }>({
+    queryKey: ['jobs-dropdown'],
+    queryFn: () => jobService.getDropdown(),
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };

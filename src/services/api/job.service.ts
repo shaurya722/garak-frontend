@@ -6,11 +6,25 @@ import {
   JobListParams,
   CreateJobPayload,
   UpdateJobPayload,
+  JobReportResponse,
+  JobReportParams,
 } from "@/types";
 import { handleApiError } from "@/lib/utils";
 
 
 export const jobService = {
+
+  async getDropdown(): Promise<{ jobs: Job[] }> {
+    try {
+      const response = await apiClient.get<{ data: { jobs: Job[] } }>(
+        apiConfig.endpoints.jobsDropdown
+      );
+
+      return response.data.data;
+    } catch (error) {
+      return handleApiError(error, "Get Jobs Dropdown");
+    }
+  },
 
   async getList(params: JobListParams = {}): Promise<JobResponse> {
     try {
@@ -73,6 +87,18 @@ export const jobService = {
       await apiClient.delete(apiConfig.endpoints.deleteJob(id));
     } catch (error) {
       return handleApiError(error, "Delete Job");
+    }
+  },
+
+  async getJobReport(id: string, params: JobReportParams): Promise<JobReportResponse> {
+    try {
+      const response = await apiClient.get<JobReportResponse>(
+        apiConfig.endpoints.getJobReport(id, params.month, params.year)
+      );
+
+      return response.data;
+    } catch (error) {
+      return handleApiError(error, "Get Job Report");
     }
   },
 };

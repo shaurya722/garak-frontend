@@ -1,5 +1,7 @@
 // Job Types and Interfaces
 
+import { Project } from './project.types';
+
 export interface Job {
   id?: string;
   projectId: string;
@@ -11,7 +13,7 @@ export interface Job {
   blueAPIKey?: string | null;
   createdAt?: string;
   updatedAt?: string;
-  project?: any; // Full project object with nested data
+  project?: Project; // Full project object with nested data
 }
 
 export interface JobFormData {
@@ -44,4 +46,41 @@ export interface JobResponse {
   currentPage: number;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
+}
+
+export interface JobReportProjectBreakdown {
+  projectId: string;
+  projectName: string;
+  totalLogs: number;
+  totalFailedLogs: number;
+  failedLogPercentage: number;
+}
+
+export interface JobReportDailyLog {
+  date: string;
+  totalLogs: number;
+}
+
+export interface JobReportDailyFailedPercentage {
+  date: string;
+  failedPercentage: number;
+}
+
+export interface JobReportData {
+  totalLogs: number;
+  totalFailedLogs: number;
+  failedLogPercentage: number;
+  projectBreakdown: JobReportProjectBreakdown[];
+  dailyLogsGraph: JobReportDailyLog[];
+  dailyFailedPercentageGraph: JobReportDailyFailedPercentage[];
+}
+
+export interface JobReportResponse {
+  message: string;
+  data: JobReportData;
+}
+
+export interface JobReportParams {
+  month: number;
+  year: number;
 }

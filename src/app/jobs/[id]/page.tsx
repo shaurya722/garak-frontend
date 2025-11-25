@@ -1,11 +1,12 @@
 import { JobDetail } from '@/components/job/JobDetail'
 
 type JobPageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
-export default function JobPage({ params }: JobPageProps) {
-  return <JobDetail jobId={params.id} />
+export default async function JobPage({ params }: JobPageProps) {
+  const { id } = await params;
+  return <JobDetail jobId={id} />
 }

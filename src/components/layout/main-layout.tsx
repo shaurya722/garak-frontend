@@ -75,6 +75,11 @@ const navigation = [
     href: '/playground',
     icon: Activity,
   },
+  {
+    name: 'API Usage',
+    href: '/api-usage',
+    icon: Activity,
+  },
   // {
   //   name: 'Agentic Radar',
   //   href: '/agentic-radar/scan',

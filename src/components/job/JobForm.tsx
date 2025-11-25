@@ -78,15 +78,15 @@ export function JobForm({ mode, jobId }: JobFormProps) {
 
     try {
       if (mode === 'create') {
-        await createMutation.mutateAsync(payload);
-        router.push('/jobs');
+        const r = await createMutation.mutateAsync(payload);
+        router.push(`/jobs/${r.id}`);
       } else if (mode === 'edit' && jobId) {
         await updateMutation.mutateAsync({
           id: jobId,
           ...payload,
           agenticReport: data.agenticReport || null,
         });
-        router.push('/jobs');
+        router.push(`/jobs/${jobId}`);
       }
     } catch (error) {
       console.error('Form submission error:', error);
@@ -201,7 +201,7 @@ export function JobForm({ mode, jobId }: JobFormProps) {
                 )}
 
                 <div className="flex justify-end space-x-4">
-                  <Link href="/jobs">
+                  <Link href={`/jobs/${jobId}`}>
                     <Button type="button" variant="outline">
                       Cancel
                     </Button>

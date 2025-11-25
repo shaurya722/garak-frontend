@@ -24,7 +24,7 @@ export function JobList() {
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
 
   const { data, isLoading, isError } = useJobs({ page, limit });
-  const deleteMutation = useDeleteJob();
+  const deleteMutation = useDeleteJob();  
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);

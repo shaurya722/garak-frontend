@@ -52,6 +52,7 @@ export const queryKeys = {
     list: (filters: Record<string, unknown>) => 
       [...queryKeys.jobs.lists(), filters] as const,
     detail: (id: string) => [...queryKeys.jobs.all, "detail", id] as const,
+    report: (id: string, params: Record<string, unknown>) => [...queryKeys.jobs.all, "report", id, params] as const,
   },
 
   // Logs

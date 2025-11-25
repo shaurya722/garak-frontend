@@ -1,5 +1,6 @@
 import MainLayout from '@/components/layout/main-layout'
 import React from 'react'
+// import { useRouter } from 'next/navigation';
 import star from '@/assets/Sparkle.svg'
 import downArrow from '@/assets/Line 612.svg'
 import Image from 'next/image'
@@ -16,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button'
 
 const GettingStarted = () => {
+  // const router = useRouter()
   return (
     <MainLayout>
            <div className='pt-20 pb-15'>
@@ -66,7 +68,7 @@ const GettingStarted = () => {
               </div>
             </div>
             {/* <button className="min-w-max px-4 h-10 flex justify-center items-center rounded bg-accent hover:bg-accentHover active:bg-accentActive transition-colors text-dark font-dm text-sm font-normal">View Tutorial</button> */}
-            <Button variant='secondary' className='bg-[#31B79D]/90 px-7'>View Tutorial</Button>
+            <Button variant='secondary' className='bg-[#31B79D]/90 px-7' >View Tutorial</Button>
           </div>
 
 
@@ -135,7 +137,7 @@ const GettingStarted = () => {
               </div>
             </div>
             {/* <button className="min-w-max px-4 h-10 flex justify-center items-center rounded bg-accent hover:bg-accentHover active:bg-accentActive transition-colors text-dark font-dm text-sm font-normal">Assign</button> */}
-            <Button variant='secondary' className='bg-[#31B79D] px-5'>Start The Scan</Button>
+            <Button variant='secondary' className='bg-[#31B79D] px-5' >Start The Scan</Button>
           </div>
         </div>
       </div>
