@@ -53,14 +53,9 @@ export function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-// ✅ Only protect specific routes, not everything
+// ✅ Run middleware on all routes except Next internals and static files
 export const config = {
   matcher: [
-    "/configurations/:path*",
-    "/detectors/:path*", 
-    "/policies/:path*",
-    "/projects/:path*",
-    "/tests/:path*",
-    "/agentic-radar/:path*"
+    "/((?!_next|api|.*\\.).*)",
   ],
 };

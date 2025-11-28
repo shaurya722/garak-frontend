@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,6 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { PublicRoute } from "@/components/auth/public-route";
+import Image from "next/image";
+import logo from "../../../../public/Frame 3020.svg";
 
 function LoginForm() {
   const router = useRouter();
@@ -47,67 +47,75 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center  p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Welcome back</CardTitle>
-          <CardDescription>Sign in to continue</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="company">Company</Label>
-              <Input 
-                id="company" 
-                type="text" 
-                value={company} 
-                onChange={(e) => setCompany(e.target.value)} 
-                placeholder="Enter your company name"
-                required 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                placeholder="Enter your email"
-                required 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                placeholder="Enter your password"
-                required 
-              />
-            </div>
-            password :  Company@123
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="rememberMe" 
-                checked={rememberMe}
-                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-              />
-              <Label htmlFor="rememberMe" className="text-sm font-normal">
-                Remember me
-              </Label>
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign in"}
-            </Button>
-          </form>
-          <p className="text-sm text-muted-foreground mt-4">
-            Don&apos;t have an account? <Link href="/signup" className="underline">Create one</Link>
-          </p>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen flex">
+      {/* Left side - Logo */}
+      <div className="flex-1 flex items-center bg-[#31B79D] justify-center lg:flex md:hidden sm:hidden">
+        <Image src={logo} alt="Aynigma Logo" width={300} height={300} />
+      </div>
+      
+      {/* Right side - Login card */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl">Sign In</CardTitle>
+            <CardDescription>Welcome back to Aynigma !</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={onSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="company">Company</Label>
+                <Input 
+                  id="company" 
+                  type="text" 
+                  value={company} 
+                  onChange={(e) => setCompany(e.target.value)} 
+                  placeholder="Enter your company name"
+                  required 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  placeholder="Enter your email"
+                  required 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input 
+                  id="password" 
+                  type="password" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  placeholder="Enter your password"
+                  required 
+                />
+              </div>
+              {/* password :  Company@123 */}
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="rememberMe" 
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                />
+                <Label htmlFor="rememberMe" className="text-sm font-normal">
+                  Remember me
+                </Label>
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Signing in..." : "Sign in"}
+              </Button>
+            </form>
+            <p className="text-sm text-muted-foreground mt-4">
+              Don&apos;t have an account? <Link href="https://aynigma.ai" className="underline">Create one</Link>
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

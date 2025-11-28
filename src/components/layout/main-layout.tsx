@@ -95,7 +95,7 @@ const navigation = [
 function AppSidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
-console.log('user',user)
+  console.log('user', user)
   return (
     <Sidebar>
       <SidebarHeader>
@@ -122,7 +122,7 @@ console.log('user',user)
             })}
           </SidebarNav>
 
-          <div className='mt-96 overflow-y-auto p-4 border-t'>
+          <div className='overflow-y-auto p-4 border-t'>
             <div className='flex items-center gap-2 mb-3'>
               <User className='h-4 w-4' />
               <div className='flex-1 min-w-0'>
